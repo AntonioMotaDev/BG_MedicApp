@@ -1,0 +1,158 @@
+
+"use client";
+
+import type { FC } from 'react';
+import { useState, useMemo } from 'react';
+import type { Patient } from "@/lib/schema";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Edit3, Trash2, ArrowUpDown, Download, FileText, Files } from 'lucide-react'; // Replaced FileCsv with Files
+import { format } from 'date-fns';
+
+interface PatientTableProps {
+  patients: Patient[];
+  onEdit: (patient: Patient) => void;
+  onDelete: (patientId: string) => void;
+}
+
+type SortKey = keyof Patient | null;
+
+const PatientTable: FC<PatientTableProps> = ({ patients, onEdit, onDelete }) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("pickupTimestamp");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>("desc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('asc');
+    }
+  };
+
+  const filteredAndSortedPatients = useMemo(() => {
+    let filtered = patients.filter(
+      (patient) =>
+        patient.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (patient.id && patient.id.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    if (sortKey) {
+      filtered.sort((a, b) => {
+        const valA = a[sortKey];
+        const valB = b[sortKey];
+
+        if (valA instanceof Date && valB instanceof Date) {
+          return sortOrder === 'asc' ? valA.getTime() - valB.getTime() : valB.getTime() - valA.getTime();
+        }
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortOrder === 'asc' ? valA - valB : valB - valA;
+        }
+        return 0;
+      });
+    }
+    return filtered;
+  }, [patients, searchTerm, sortKey, sortOrder]);
+
+  const renderSortIcon = (key: SortKey) => {
+    if (sortKey === key) {
+      return sortOrder === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4 inline-block" /> : <ArrowUpDown className="ml-2 h-4 w-4 inline-block transform rotate-180" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4 inline-block opacity-50" />;
+  };
+
+  // Placeholder export functions
+  const handleExportPDF = () => alert("PDF export functionality not yet implemented.");
+  const handleExportCSV = () => alert("CSV export functionality not yet implemented.");
+
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <Input
+          placeholder="Search by name or Patient ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF}><FileText className="mr-2 h-4 w-4" /> Export PDF</Button>
+          <Button variant="outline" onClick={handleExportCSV}><Files className="mr-2 h-4 w-4" /> Export CSV</Button>
+        </div>
+      </div>
+      <div className="rounded-md border shadow-sm bg-card">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('id')}>Patient ID {renderSortIcon('id')}</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('fullName')}>Full Name {renderSortIcon('fullName')}</TableHead>
+              <TableHead>Date of Birth</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead className="cursor-pointer" onClick={() => handleSort('pickupTimestamp')}>Pickup Timestamp {renderSortIcon('pickupTimestamp')}</TableHead>
+              <TableHead>Weight (kg)</TableHead>
+              <TableHead>Height (cm)</TableHead>
+              <TableHead>Emergency Contact</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAndSortedPatients.length > 0 ? (
+              filteredAndSortedPatients.map((patient) => (
+                <TableRow key={patient.id}>
+                  <TableCell className="font-medium">{patient.id}</TableCell>
+                  <TableCell>{patient.fullName}</TableCell>
+                  <TableCell>{patient.dateOfBirth ? format(new Date(patient.dateOfBirth), 'yyyy-MM-dd') : 'N/A'}</TableCell>
+                  <TableCell>{patient.gender}</TableCell>
+                  <TableCell>{patient.pickupTimestamp ? format(new Date(patient.pickupTimestamp), 'yyyy-MM-dd HH:mm') : 'N/A'}</TableCell>
+                  <TableCell>{patient.weightKg}</TableCell>
+                  <TableCell>{patient.heightCm}</TableCell>
+                  <TableCell>{patient.emergencyContact}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(patient)}>
+                          <Edit3 className="mr-2 h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => patient.id && onDelete(patient.id)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={9} className="h-24 text-center">
+                  No patient records found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
+
+export default PatientTable;
+
