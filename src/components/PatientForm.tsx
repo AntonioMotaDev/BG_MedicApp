@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -26,9 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+// Removed Popover, Calendar, CalendarIcon imports
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -106,41 +103,22 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
         <FormField
           control={form.control}
           name="dateOfBirth"
-          render={({ field }) => ( // field.value should be Date | undefined
-            <FormItem className="flex flex-col">
+          render={({ field }) => (
+            <FormItem>
               <FormLabel>Date of Birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                      disabled={form.formState.isSubmitting}
-                    >
-                      {field.value ? ( // If field.value is a Date object
-                        format(field.value, "PPP") // PPP format e.g. "Jul 22, 2024"
-                      ) : ( // If field.value is undefined
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value} // Pass Date | undefined directly
-                    onSelect={field.onChange} // RHF onChange handles Date | undefined
-                    disabled={(date) => // date is a Date object from react-day-picker
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input
+                  type="date"
+                  {...field}
+                  value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    field.onChange(e.target.value ? e.target.value : undefined);
+                  }}
+                  max={format(new Date(), 'yyyy-MM-dd')} // Prevent future dates
+                  min="1900-01-01" // Optional: set a reasonable minimum past date
+                  className={cn(!field.value && "text-muted-foreground")}
+                />
+              </FormControl>
               <FormDescription>
                 Your date of birth is used to calculate your age.
               </FormDescription>
