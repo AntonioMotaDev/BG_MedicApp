@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { FC } from 'react';
@@ -8,7 +9,7 @@ import { addPatient, updatePatient } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/ui/label"; // Unused, consider removing if not needed elsewhere
 import {
   Select,
   SelectContent,
@@ -25,8 +26,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+// import { format } from "date-fns"; // No longer needed for YYYY-MM-DD string input
+// import { cn } from "@/lib/utils"; // No longer needed if Popover/Calendar removed
 import { useToast } from "@/hooks/use-toast";
 
 interface PatientFormProps {
@@ -41,16 +42,16 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
     defaultValues: patient
       ? {
           fullName: patient.fullName,
-          dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth) : undefined,
+          dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.toISOString().split('T')[0] : '', // Keep as string YYYY-MM-DD
           gender: patient.gender,
           weightKg: patient.weightKg,
           heightCm: patient.heightCm,
-          emergencyContact: patient.emergencyContact,
+          emergencyContact: patient.emergencyContact || "", // Ensure "" if undefined
           medicalNotes: patient.medicalNotes || "",
         }
       : {
           fullName: "",
-          dateOfBirth: undefined,
+          dateOfBirth: "", // Keep as string YYYY-MM-DD
           gender: undefined,
           weightKg: undefined,
           heightCm: undefined,
@@ -61,10 +62,16 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
 
   const onSubmit = async (data: PatientFormData) => {
     let result;
+    // Ensure dateOfBirth is a Date object before sending to server action
+    const dataToSend = {
+      ...data,
+      dateOfBirth: new Date(data.dateOfBirth), // Convert YYYY-MM-DD string to Date
+    };
+
     if (patient && patient.id) {
-      result = await updatePatient(patient.id, data);
+      result = await updatePatient(patient.id, dataToSend);
     } else {
-      result = await addPatient(data);
+      result = await addPatient(dataToSend);
     }
 
     if (result.success) {
@@ -107,32 +114,15 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
                 <Input
-                  type="date"
+                  type="text" // Changed to text to allow YYYY-MM-DD format directly
+                  placeholder="YYYY-MM-DD"
                   {...field}
-                  value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''}
-                  onChange={(e) => {
-                    const dateString = e.target.value;
-                    if (dateString) {
-                      // Parse YYYY-MM-DD string into a local Date object
-                      // The native date input provides dateString as YYYY-MM-DD
-                      // new Date(year, monthIndex, day) creates a local date
-                      const parts = dateString.split('-');
-                      const year = parseInt(parts[0], 10);
-                      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-                      const day = parseInt(parts[2], 10);
-                      const localDate = new Date(year, month, day);
-                      field.onChange(localDate);
-                    } else {
-                      field.onChange(undefined);
-                    }
-                  }}
-                  max={format(new Date(), 'yyyy-MM-dd')} 
-                  min="1900-01-01" 
-                  className={cn(!field.value && "text-muted-foreground")}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  value={field.value || ''} // Ensure value is a string
                 />
               </FormControl>
               <FormDescription>
-                Your date of birth is used to calculate your age.
+                Please use YYYY-MM-DD format.
               </FormDescription>
               <FormMessage />
             </FormItem>
