@@ -25,7 +25,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-// Removed Popover, Calendar, CalendarIcon imports
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -112,10 +111,23 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
                   {...field}
                   value={field.value instanceof Date ? format(field.value, 'yyyy-MM-dd') : ''}
                   onChange={(e) => {
-                    field.onChange(e.target.value ? e.target.value : undefined);
+                    const dateString = e.target.value;
+                    if (dateString) {
+                      // Parse YYYY-MM-DD string into a local Date object
+                      // The native date input provides dateString as YYYY-MM-DD
+                      // new Date(year, monthIndex, day) creates a local date
+                      const parts = dateString.split('-');
+                      const year = parseInt(parts[0], 10);
+                      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                      const day = parseInt(parts[2], 10);
+                      const localDate = new Date(year, month, day);
+                      field.onChange(localDate);
+                    } else {
+                      field.onChange(undefined);
+                    }
                   }}
-                  max={format(new Date(), 'yyyy-MM-dd')} // Prevent future dates
-                  min="1900-01-01" // Optional: set a reasonable minimum past date
+                  max={format(new Date(), 'yyyy-MM-dd')} 
+                  min="1900-01-01" 
                   className={cn(!field.value && "text-muted-foreground")}
                 />
               </FormControl>
@@ -159,7 +171,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Weight (kg)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="70" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                  <Input type="number" placeholder="70" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -173,7 +185,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Height (cm)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="175" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} />
+                  <Input type="number" placeholder="175" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
