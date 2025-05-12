@@ -4,8 +4,9 @@ import { z } from 'zod';
 export const PatientSchema = z.object({
   id: z.string().optional(), // Firestore ID, not part of form input for creation
   fullName: z.string().min(1, "Full name is required"),
-  dateOfBirth: z.date({
+  dateOfBirth: z.coerce.date({ // Changed from z.date() to z.coerce.date()
     required_error: "Date of birth is required.",
+    invalid_type_error: "Invalid date format. Please select a valid date.",
   }),
   gender: z.enum(["Male", "Female", "Other", "Prefer not to say"], {
     required_error: "Gender is required.",
@@ -21,3 +22,4 @@ export type Patient = z.infer<typeof PatientSchema>;
 
 export const PatientFormSchema = PatientSchema.omit({ id: true, pickupTimestamp: true });
 export type PatientFormData = z.infer<typeof PatientFormSchema>;
+
