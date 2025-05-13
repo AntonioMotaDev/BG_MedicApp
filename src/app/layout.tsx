@@ -1,22 +1,24 @@
 
 import type {Metadata} from 'next';
-import { Geist, Geist_Mono } from 'next/font/google'; // Corrected import to Geist instead of Inter
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"; // Added Toaster import
+import { Toaster } from "@/components/ui/toaster";
+import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import AppSidebarContent from '@/components/AppSidebarContent'; // New component for sidebar's content
 
-const geistSans = Geist({ // Changed to geistSans
+const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({ // Changed to geistMono
+const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: 'BG MedicApp', // Updated title
-  description: 'Patient Records Management', // Updated description
+  title: 'BG MedicApp',
+  description: 'Patient Records Management',
 };
 
 export default function RootLayout({
@@ -27,10 +29,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        <Toaster />
+        <SidebarProvider defaultOpen={false}> {/* Sidebar can start collapsed or based on cookie */}
+          <div className="flex min-h-screen"> {/* Ensures full height and flex layout */}
+            <Sidebar side="left" collapsible="icon" className="border-r bg-card text-card-foreground"> {/* Sidebar component itself */}
+              <AppSidebarContent />
+            </Sidebar>
+            <SidebarInset className="flex-1 flex flex-col bg-background"> {/* Main content area that resizes */}
+              {/* children from page.tsx (which includes Header, main, footer) goes here */}
+              {children}
+            </SidebarInset>
+          </div>
+          <Toaster />
+        </SidebarProvider>
       </body>
     </html>
   );
 }
-
