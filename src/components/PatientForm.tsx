@@ -9,7 +9,7 @@ import { addPatient, updatePatient } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label"; // Unused, consider removing if not needed elsewhere
+// import { Label } from "@/components/ui/label"; // Unused
 import {
   Select,
   SelectContent,
@@ -26,8 +26,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-// import { format } from "date-fns"; // No longer needed for YYYY-MM-DD string input
-// import { cn } from "@/lib/utils"; // No longer needed if Popover/Calendar removed
 import { useToast } from "@/hooks/use-toast";
 
 interface PatientFormProps {
@@ -41,18 +39,18 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
     resolver: zodResolver(PatientFormSchema),
     defaultValues: patient
       ? {
-          fullName: patient.fullName,
-          dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.toISOString().split('T')[0] : '', // Keep as string YYYY-MM-DD
+          fullName: patient.fullName || "", // Ensure "" if undefined/null
+          dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.toISOString().split('T')[0] : '',
           gender: patient.gender,
-          weightKg: patient.weightKg,
-          heightCm: patient.heightCm,
-          emergencyContact: patient.emergencyContact || "", // Ensure "" if undefined
-          medicalNotes: patient.medicalNotes || "",
+          weightKg: patient.weightKg, // react-hook-form handles undefined for numbers
+          heightCm: patient.heightCm, // react-hook-form handles undefined for numbers
+          emergencyContact: patient.emergencyContact || "", // Ensure "" if undefined/null
+          medicalNotes: patient.medicalNotes || "", // Ensure "" if undefined/null
         }
       : {
           fullName: "",
-          dateOfBirth: "", // Keep as string YYYY-MM-DD
-          gender: undefined,
+          dateOfBirth: "",
+          gender: undefined, // For Select, undefined is fine for placeholder
           weightKg: undefined,
           heightCm: undefined,
           emergencyContact: "",
@@ -62,11 +60,15 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
 
   const onSubmit = async (data: PatientFormData) => {
     let result;
-    // Ensure dateOfBirth is a Date object before sending to server action
     const dataToSend = {
       ...data,
-      dateOfBirth: new Date(data.dateOfBirth), // Convert YYYY-MM-DD string to Date
+      // Ensure dateOfBirth is a Date object when sending to server action.
+      // The input is text YYYY-MM-DD, Zod coerces it to Date on validation for the form state.
+      // If data.dateOfBirth is already a Date (from Zod coercion), this is fine.
+      // If it's a string (shouldn't happen post-validation if Zod coerces properly), it's converted.
+      dateOfBirth: new Date(data.dateOfBirth),
     };
+
 
     if (patient && patient.id) {
       result = await updatePatient(patient.id, dataToSend);
@@ -99,7 +101,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="John Doe" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -114,10 +116,9 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormLabel>Date of Birth</FormLabel>
               <FormControl>
                 <Input
-                  type="text" // Changed to text to allow YYYY-MM-DD format directly
+                  type="text"
                   placeholder="YYYY-MM-DD"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
                   value={field.value || ''} // Ensure value is a string
                 />
               </FormControl>
@@ -135,7 +136,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
@@ -161,7 +162,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Weight (kg)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="70" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
+                  <Input type="number" placeholder="70" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -175,7 +176,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Height (cm)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="175" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} />
+                  <Input type="number" placeholder="175" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} value={field.value ?? ''}/>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -190,7 +191,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
             <FormItem>
               <FormLabel>Emergency Contact Phone</FormLabel>
               <FormControl>
-                <Input type="tel" placeholder="+12223334444" {...field} />
+                <Input type="tel" placeholder="+12223334444" {...field} value={field.value || ''} />
               </FormControl>
               <FormDescription>Include country code if applicable.</FormDescription>
               <FormMessage />
@@ -205,7 +206,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
             <FormItem>
               <FormLabel>Medical Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Relevant medical history, allergies, etc." rows={4} {...field} />
+                <Textarea placeholder="Relevant medical history, allergies, etc." rows={4} {...field} value={field.value || ''}/>
               </FormControl>
               <FormMessage />
             </FormItem>
