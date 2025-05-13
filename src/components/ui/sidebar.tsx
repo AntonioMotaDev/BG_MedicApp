@@ -1,6 +1,8 @@
+
 "use client"
 
 import * as React from "react"
+import Link, { type LinkProps } from "next/link" // Import Next.js Link
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
@@ -533,13 +535,22 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
+// Adjusted SidebarMenuButton props
+interface SidebarMenuButtonProps
+  extends Omit<React.HTMLAttributes<HTMLElement>, "type">, // More generic HTML attributes, Omit type to avoid conflict
+    VariantProps<typeof sidebarMenuButtonVariants> {
+  asChild?: boolean;
+  isActive?: boolean;
+  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  href?: string; // Add href
+  type?: "button" | "submit" | "reset"; // Explicitly add button type for non-link scenarios
+  // children is part of React.HTMLAttributes
+}
+
+
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>
+  HTMLElement, // Changed ref type to HTMLElement for flexibility
+  SidebarMenuButtonProps
 >(
   (
     {
@@ -549,48 +560,97 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
+      href,
+      children, // Explicitly destructure children
+      type: buttonType, // Destructure type as buttonType to avoid conflict with HTMLAttributes type
       ...props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
-    const button = (
-      <Comp
-        ref={ref}
-        data-sidebar="menu-button"
-        data-size={size}
-        data-active={isActive}
-        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      />
-    )
+    const commonStyles = cn(sidebarMenuButtonVariants({ variant, size }), className);
+    const commonDataAttributes = {
+      "data-sidebar": "menu-button",
+      "data-size": size,
+      "data-active": isActive,
+    };
 
+    let buttonElementNode;
+
+    if (href) {
+      const linkElementProps = {
+        ...props, // Pass other HTML attributes like id, aria-label etc.
+        ref: ref as React.Ref<HTMLAnchorElement>, // Cast ref for anchor
+        className: commonStyles,
+        ...commonDataAttributes,
+      };
+      const linkComponentProps: Omit<LinkProps, "children" | "asChild" | "passHref" | "legacyBehavior"> & {children?: React.ReactNode} = { 
+        href,
+         // Pass relevant props from ...props if they are Link specific e.g. prefetch, replace
+        ...(props as Omit<LinkProps, "href">)
+      };
+
+
+      if (asChild) {
+        // If asChild is true for SidebarMenuButton, Link also uses asChild
+        // and Slot receives the styling and event handlers.
+        buttonElementNode = (
+          <Link {...linkComponentProps} asChild legacyBehavior passHref>
+            <Slot {...linkElementProps} >{children}</Slot>
+          </Link>
+        );
+      } else {
+        // If asChild is false, Link wraps a styled anchor tag.
+        buttonElementNode = (
+          <Link {...linkComponentProps} legacyBehavior passHref>
+            <a {...linkElementProps}>{children}</a>
+          </Link>
+        );
+      }
+    } else {
+      // Original button logic (no href)
+      const actualButtonType = buttonType || "button"; // Default to "button" if not specified
+      const buttonElementProps = {
+        ...props,
+        ref: ref as React.Ref<HTMLButtonElement>, // Cast ref for button
+        className: commonStyles,
+        type: actualButtonType,
+        ...commonDataAttributes,
+      };
+      const Comp = asChild ? Slot : "button";
+      buttonElementNode = (
+         // @ts-ignore Comp can be 'button' or Slot, props are compatible
+        <Comp {...buttonElementProps}>{children}</Comp>
+      );
+    }
+    
     if (!tooltip) {
-      return button
+      return buttonElementNode;
     }
 
+    let tooltipProps: React.ComponentProps<typeof TooltipContent>;
     if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
+      tooltipProps = { children: tooltip };
+    } else {
+      tooltipProps = tooltip;
     }
 
     return (
       <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipTrigger asChild>{buttonElementNode}</TooltipTrigger>
         <TooltipContent
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
+          {...tooltipProps}
         />
       </Tooltip>
-    )
+    );
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
+
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
@@ -706,32 +766,52 @@ const SidebarMenuSubItem = React.forwardRef<
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
 
 const SidebarMenuSubButton = React.forwardRef<
-  HTMLAnchorElement,
-  React.ComponentProps<"a"> & {
+  HTMLAnchorElement, // Assuming this is primarily for links
+  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & { // Omit href from HTMLAnchorAttributes
     asChild?: boolean
     size?: "sm" | "md"
     isActive?: boolean
+    href?: string; // Add href here
   }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
+>(({ asChild = false, size = "md", isActive, className, href, children, ...props }, ref) => {
+  const commonSubButtonProps = {
+    "data-sidebar":"menu-sub-button",
+    "data-size":size,
+    "data-active":isActive,
+    className: cn(
+      "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
+      "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
+      size === "sm" && "text-xs",
+      size === "md" && "text-sm",
+      "group-data-[collapsible=icon]:hidden",
+      className
+    ),
+    ...props
+  };
 
-  return (
-    <Comp
-      ref={ref}
-      data-sidebar="menu-sub-button"
-      data-size={size}
-      data-active={isActive}
-      className={cn(
-        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-sidebar-accent-foreground",
-        "data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground",
-        size === "sm" && "text-xs",
-        size === "md" && "text-sm",
-        "group-data-[collapsible=icon]:hidden",
-        className
-      )}
-      {...props}
-    />
-  )
+  if (href) {
+    const Comp = asChild ? Slot : "a";
+    return (
+      <Link href={href} passHref legacyBehavior={!asChild} {...(asChild ? {asChild: true} : {})}>
+        {/* @ts-ignore */}
+        <Comp ref={ref} {...commonSubButtonProps}>
+          {children}
+        </Comp>
+      </Link>
+    );
+  }
+
+  // Fallback to a div or span if not a link and not asChild, or handle error
+  // For now, let's assume if href is not provided, it's not meant to be interactive or is handled by asChild
+  if (asChild) {
+    // @ts-ignore
+    return <Slot ref={ref} {...commonSubButtonProps}>{children}</Slot>;
+  }
+
+  // Default to a non-interactive div if no href and not asChild, or consider it an error.
+  // This case might need further thought based on usage.
+  // @ts-ignore
+  return <div ref={ref as React.Ref<HTMLDivElement>} {...commonSubButtonProps}>{children}</div>;
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
