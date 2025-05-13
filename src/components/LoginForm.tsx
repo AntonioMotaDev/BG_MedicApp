@@ -36,6 +36,7 @@ const LoginForm: FC = () => {
     if (data.email === 'user@example.com' && data.password === 'password123') {
       if (typeof window !== 'undefined') {
         localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userEmail', data.email); // Store user email
       }
       toast({
         title: 'Login Successful',
@@ -102,3 +103,4 @@ const LoginForm: FC = () => {
 };
 
 export default LoginForm;
+
