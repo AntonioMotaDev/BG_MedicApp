@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({ // Changed to geistMono
 });
 
 export const metadata: Metadata = {
-  title: 'RescueDoc', // Updated title
-  description: 'Ambulance Patient Records Management', // Updated description
+  title: 'BG MedicApp', // Updated title
+  description: 'Patient Records Management', // Updated description
 };
 
 export default function RootLayout({
@@ -33,3 +33,4 @@ export default function RootLayout({
     </html>
   );
 }
+

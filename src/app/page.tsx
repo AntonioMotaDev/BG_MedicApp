@@ -5,8 +5,8 @@ import PatientManagementPage from "@/components/PatientManagementPage"; // Clien
 import Header from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'RescueDoc - Patient Records',
-  description: 'Manage ambulance patient records efficiently and securely.',
+  title: 'BG MedicApp - Patient Records',
+  description: 'Manage patient records efficiently and securely.',
 };
 
 // This is a Server Component
@@ -21,8 +21,9 @@ export default async function Home() {
         <PatientManagementPage initialPatients={initialPatients} />
       </main>
       <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-        © {new Date().getFullYear()} RescueDoc. All rights reserved. (For demo purposes only)
+        © {new Date().getFullYear()} BG MedicApp. All rights reserved. (For demo purposes only)
       </footer>
     </div>
   );
 }
+
