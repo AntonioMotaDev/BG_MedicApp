@@ -27,6 +27,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
 
 interface PatientFormProps {
   patient?: Patient; // For editing
@@ -39,18 +48,19 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
     resolver: zodResolver(PatientFormSchema),
     defaultValues: patient
       ? {
-          fullName: patient.fullName || "", // Ensure "" if undefined/null
-          dateOfBirth: patient.dateOfBirth ? patient.dateOfBirth.toISOString().split('T')[0] : '',
+          fullName: patient.fullName || "", 
+          // Ensure dateOfBirth is a Date object for the form's default value if editing
+          dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth) : undefined,
           gender: patient.gender,
-          weightKg: patient.weightKg, // react-hook-form handles undefined for numbers
-          heightCm: patient.heightCm, // react-hook-form handles undefined for numbers
-          emergencyContact: patient.emergencyContact || "", // Ensure "" if undefined/null
-          medicalNotes: patient.medicalNotes || "", // Ensure "" if undefined/null
+          weightKg: patient.weightKg ?? undefined, 
+          heightCm: patient.heightCm ?? undefined,
+          emergencyContact: patient.emergencyContact || "", 
+          medicalNotes: patient.medicalNotes || "", 
         }
       : {
           fullName: "",
-          dateOfBirth: "",
-          gender: undefined, // For Select, undefined is fine for placeholder
+          dateOfBirth: undefined, // Use undefined for Popover default
+          gender: undefined, 
           weightKg: undefined,
           heightCm: undefined,
           emergencyContact: "",
@@ -60,20 +70,14 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
 
   const onSubmit = async (data: PatientFormData) => {
     let result;
-    const dataToSend = {
-      ...data,
-      // Ensure dateOfBirth is a Date object when sending to server action.
-      // The input is text YYYY-MM-DD, Zod coerces it to Date on validation for the form state.
-      // If data.dateOfBirth is already a Date (from Zod coercion), this is fine.
-      // If it's a string (shouldn't happen post-validation if Zod coerces properly), it's converted.
-      dateOfBirth: new Date(data.dateOfBirth),
-    };
-
+    // The 'data' object here is already of type PatientFormData,
+    // meaning data.dateOfBirth is already a Date object due to Zod coercion.
+    // It can be passed directly to the server actions.
 
     if (patient && patient.id) {
-      result = await updatePatient(patient.id, dataToSend);
+      result = await updatePatient(patient.id, data);
     } else {
-      result = await addPatient(dataToSend);
+      result = await addPatient(data);
     }
 
     if (result.success) {
@@ -112,18 +116,41 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
           control={form.control}
           name="dateOfBirth"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Date of Birth</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="YYYY-MM-DD"
-                  {...field}
-                  value={field.value || ''} // Ensure value is a string
-                />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <FormDescription>
-                Please use YYYY-MM-DD format.
+                Your date of birth is used to calculate your age.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -136,7 +163,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
