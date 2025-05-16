@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation'; // Added usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import { LogOut, User, Settings, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,23 +20,27 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  // SidebarFooter, // Not used for now
 } from '@/components/ui/sidebar';
 
 const AppSidebarContent: FC = () => {
   const router = useRouter();
-  const pathname = usePathname(); // For isActive state on navigation buttons
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>('User');
-  const [isClient, setIsClient] = useState(false); // To prevent hydration mismatch
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true); // Component has mounted on client
+    setIsClient(true);
     if (typeof window !== 'undefined') {
       const authStatus = localStorage.getItem('isAuthenticated') === 'true';
       if (!authStatus) {
         setIsAuthenticated(false);
+        // If not authenticated and not on login page, redirect.
+        // This check might be redundant if pages themselves handle redirection.
+        // if (pathname !== '/login') {
+        //   router.replace('/login');
+        // }
         return;
       }
       setIsAuthenticated(true);
@@ -46,13 +50,14 @@ const AppSidebarContent: FC = () => {
         setUserName(email.split('@')[0] || 'User');
       }
     }
-  }, []);
+  }, [pathname, router]); // Added pathname and router to dependencies
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('userEmail');
     }
+    setIsAuthenticated(false); // Update state immediately
     router.push('/login');
   };
 
@@ -60,13 +65,18 @@ const AppSidebarContent: FC = () => {
     router.push('/profile');
   };
 
-  // Wait for client-side mount to check auth, prevents hydration issues
   if (!isClient) {
     return null; 
   }
 
-  if (!isAuthenticated) {
-     return null; // Or a login button if sidebar should be visible for non-auth users
+  // Only render sidebar content if authenticated, unless it's the login page.
+  // This prevents the sidebar from showing briefly on the login page if navigating there.
+  if (!isAuthenticated && pathname !== '/login') {
+     return null; 
+  }
+  // If on login page, don't render authenticated sidebar
+  if (pathname === '/login') {
+      return null;
   }
 
 
@@ -87,7 +97,7 @@ const AppSidebarContent: FC = () => {
               <ChevronDown className="ml-auto h-4 w-4 opacity-70 shrink-0 group-data-[collapsible=icon]:hidden" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="right" sideOffset={12} className="w-56 min-w-[calc(var(--sidebar-width)_-_1.5rem)] md:min-w-56 z-20"> {/* Ensure z-index if needed */}
+          <DropdownMenuContent align="start" side="right" sideOffset={12} className="w-56 min-w-[calc(var(--sidebar-width)_-_1.5rem)] md:min-w-56 z-20">
             <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{userName}</p>
@@ -112,9 +122,15 @@ const AppSidebarContent: FC = () => {
 
       <SidebarMenu className="flex-grow p-2 space-y-1">
          <SidebarMenuItem>
-          <SidebarMenuButton href="/" tooltip="Dashboard" isActive={pathname === '/'}>
+          <SidebarMenuButton href="/main-menu" tooltip="Main Menu" isActive={pathname === '/main-menu'}>
             <LayoutDashboard /> 
-            <span className="group-data-[collapsible=icon]:hidden">Dashboard</span>
+            <span className="group-data-[collapsible=icon]:hidden">Main Menu</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton href="/" tooltip="Manage Patients" isActive={pathname === '/'}>
+            <Users /> 
+            <span className="group-data-[collapsible=icon]:hidden">Patients</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
          <SidebarMenuItem>

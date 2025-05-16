@@ -15,7 +15,7 @@ const LoginPage: NextPage = () => {
     if (typeof window !== 'undefined') {
       const isAuthenticated = localStorage.getItem('isAuthenticated');
       if (isAuthenticated === 'true') {
-        router.replace('/'); // Redirect to dashboard if already authenticated
+        router.replace('/main-menu'); // Redirect to main menu if already authenticated
       }
     }
   }, [router]);

@@ -42,7 +42,7 @@ const LoginForm: FC = () => {
         title: 'Login Successful',
         description: 'Welcome back!',
       });
-      router.push('/'); // Redirect to the main dashboard
+      router.push('/main-menu'); // Redirect to the main menu
     } else {
       toast({
         title: 'Login Failed',
@@ -103,4 +103,3 @@ const LoginForm: FC = () => {
 };
 
 export default LoginForm;
-

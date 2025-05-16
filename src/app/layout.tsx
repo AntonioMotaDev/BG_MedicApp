@@ -1,24 +1,27 @@
 
 import type {Metadata} from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Roboto_Mono } from 'next/font/google'; // Changed from Geist
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
-import AppSidebarContent from '@/components/AppSidebarContent'; // New component for sidebar's content
+import AppSidebarContent from '@/components/AppSidebarContent';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
   subsets: ['latin'],
+  variable: '--font-sans', // Use standard CSS variable name for Tailwind
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const robotoMono = Roboto_Mono({
   subsets: ['latin'],
+  variable: '--font-mono', // Use standard CSS variable name for Tailwind
 });
 
 export const metadata: Metadata = {
-  title: 'BG MedicApp',
-  description: 'Patient Records Management',
+  title: {
+    default: 'BG MedicApp',
+    template: '%s | BG MedicApp',
+  },
+  description: 'Patient Records Management and App Utilities',
 };
 
 export default function RootLayout({
@@ -28,14 +31,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SidebarProvider defaultOpen={false}> {/* Sidebar can start collapsed or based on cookie */}
-          <div className="flex min-h-screen"> {/* Ensures full height and flex layout */}
-            <Sidebar side="left" collapsible="icon" className="border-r bg-card text-card-foreground"> {/* Sidebar component itself */}
+      <body className={`${inter.variable} ${robotoMono.variable} font-sans antialiased`}>
+        <SidebarProvider defaultOpen={true}> {/* Sidebar can start open */}
+          <div className="flex min-h-screen">
+            <Sidebar side="left" collapsible="icon" className="border-r bg-card text-card-foreground">
               <AppSidebarContent />
             </Sidebar>
-            <SidebarInset className="flex-1 flex flex-col bg-background"> {/* Main content area that resizes */}
-              {/* children from page.tsx (which includes Header, main, footer) goes here */}
+            <SidebarInset className="flex-1 flex flex-col bg-background">
               {children}
             </SidebarInset>
           </div>
