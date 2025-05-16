@@ -70,14 +70,14 @@ const DashboardPageContent: FC<DashboardPageContentProps> = ({ initialPatients }
 
   return (
      <div className="space-y-6">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <h2 className="text-3xl font-bold text-primary">Patient Records</h2>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-primary">Patient Records</h2>
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleAddPatientClick} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button onClick={handleAddPatientClick} className="bg-accent hover:bg-accent/90 text-accent-foreground w-full sm:w-auto">
               <UserPlus className="mr-2 h-5 w-5" /> Add New Patient
             </Button>
             <Link href="/main-menu" passHref legacyBehavior>
-              <Button variant="outline">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <ArrowLeftCircle className="mr-2 h-5 w-5" />
                 Back to Main Menu
               </Button>
@@ -91,7 +91,7 @@ const DashboardPageContent: FC<DashboardPageContentProps> = ({ initialPatients }
             if (!isOpen) closeAddForm(); // Ensure form closes correctly
             else setIsAddFormOpen(true);
         }}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
                 <DialogTitle>Add New Patient Record</DialogTitle>
                 <DialogDescription>

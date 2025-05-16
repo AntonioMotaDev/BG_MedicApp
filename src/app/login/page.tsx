@@ -23,10 +23,10 @@ const LoginPage: NextPage = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <Stethoscope className="h-16 w-16 text-primary mb-4" />
-          <h1 className="text-3xl font-bold text-primary">BG MedicApp</h1>
-          <p className="text-muted-foreground">Welcome back! Please login to your account.</p>
+        <div className="flex flex-col items-center mb-6 sm:mb-8">
+          <Stethoscope className="h-12 w-12 sm:h-16 sm:w-16 text-primary mb-3 sm:mb-4" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary">BG MedicApp</h1>
+          <p className="text-muted-foreground text-center mt-1">Welcome back! Please login to your account.</p>
         </div>
         <LoginForm />
          <footer className="text-center mt-8 text-muted-foreground text-sm">

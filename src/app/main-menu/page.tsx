@@ -9,13 +9,9 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, UserCog, LayoutGrid, Loader2 } from 'lucide-react';
-import type { Metadata } from 'next'; // For page metadata, though not directly used by "use client"
+// import type { Metadata } from 'next'; // For page metadata, though not directly used by "use client"
 
 // Note: `export const metadata` won't work in a "use client" component directly.
-// Metadata for client pages should be handled in a parent server component or layout if dynamic,
-// or can be set statically if the page component itself is a server component and this content is moved.
-// For simplicity, if static, it can be in a layout specific to this route group or in RootLayout.
-// Given this is a "use client" page, we'll imply metadata is handled by RootLayout or a future specific layout.
 
 const MainMenuPage: NextPage = () => {
   const router = useRouter();
@@ -70,12 +66,12 @@ const MainMenuPage: NextPage = () => {
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center">
         <Card className="w-full max-w-2xl mb-8 shadow-lg rounded-lg">
-          <CardHeader className="text-center">
-            <LayoutGrid className="h-12 w-12 mx-auto text-primary mb-2" />
-            <CardTitle className="text-3xl">Main Menu</CardTitle>
+          <CardHeader className="text-center p-4 sm:p-6">
+            <LayoutGrid className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-primary mb-2" />
+            <CardTitle className="text-2xl sm:text-3xl">Main Menu</CardTitle>
             <CardDescription>Select an option to proceed.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-6">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
             <Link href="/" passHref legacyBehavior>
               <Button variant="outline" size="lg" className="w-full h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">
                 <Users className="h-8 w-8 mb-2 text-primary" />
@@ -88,15 +84,9 @@ const MainMenuPage: NextPage = () => {
                 User Profile
               </Button>
             </Link>
-            {/* Example for a future button
-            <Button variant="outline" size="lg" className="w-full h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4" disabled>
-              <Settings className="h-8 w-8 mb-2 text-muted-foreground" />
-              Settings (Soon)
-            </Button>
-            */}
           </CardContent>
         </Card>
-         <p className="text-sm text-muted-foreground">
+         <p className="text-sm text-muted-foreground text-center">
             Tip: You can also use the sidebar for navigation.
           </p>
       </main>
@@ -108,15 +98,3 @@ const MainMenuPage: NextPage = () => {
 };
 
 export default MainMenuPage;
-
-// Static metadata can be defined in a layout.tsx file within an app/main-menu/layout.tsx
-// or for the whole app in src/app/layout.tsx if it's general.
-// For a client component, if you need dynamic metadata, use the 'use client' component
-// to fetch data and then pass it to a Server Component that renders metadata tags,
-// or use a third-party library if that's simpler for your use case.
-// Since metadata is static here, it's better in RootLayout or a specific group layout.
-// For this exercise, we will assume title is set by RootLayout or a higher order component.
-// export const metadata: Metadata = {
-// title: 'BG MedicApp - Main Menu',
-// description: 'Main menu for BG MedicApp.',
-// };
