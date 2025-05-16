@@ -4,7 +4,7 @@
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { LogOut, User, Settings, ChevronDown, LayoutDashboard } from 'lucide-react';
+import { LogOut, User, Settings, ChevronDown, LayoutDashboard, Users } from 'lucide-react'; // Added Users
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
