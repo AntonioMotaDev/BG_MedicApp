@@ -37,6 +37,7 @@ export async function addPatient(formData: PatientFormData): Promise<{ success: 
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors.map(e => e.message).join(', ') };
     }
+    console.error("Error in addPatient:", error);
     return { success: false, error: error.message || "Failed to add patient." };
   }
 }
@@ -74,6 +75,7 @@ export async function updatePatient(id: string, formData: Partial<PatientFormDat
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors.map(e => e.message).join(', ') };
     }
+    console.error("Error in updatePatient:", error);
     return { success: false, error: error.message || "Failed to update patient." };
   }
 }
@@ -85,11 +87,16 @@ export async function deletePatient(id: string): Promise<{ success: boolean; err
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
+    console.error("Error in deletePatient:", error);
     return { success: false, error: error.message || "Failed to delete patient." };
   }
 }
 
 export async function getPatientById(id: string): Promise<Patient | null> {
+  if (!id || typeof id !== 'string' || id.trim() === "") {
+    console.error("getPatientById: Invalid or empty ID provided:", id);
+    return null;
+  }
   try {
     const patientDocRef = doc(db, "patients", id);
     const docSnap = await getDoc(patientDocRef);
@@ -97,11 +104,15 @@ export async function getPatientById(id: string): Promise<Patient | null> {
     if (docSnap.exists()) {
       return processPatientDoc(docSnap);
     } else {
-      console.log("No such patient document with ID:", id);
+      console.log(`No such patient document with ID: ${id}`);
       return null;
     }
   } catch (error: any) {
-    console.error("Error fetching patient by ID:", error);
+    // Log the specific ID for which the fetch failed, along with the error.
+    console.error(`Error fetching patient by ID (${id}):`, error);
+    // The error message often includes "client is offline" if that's the case.
+    // No need to return a custom message here as the console.error provides details.
     return null;
   }
 }
+
