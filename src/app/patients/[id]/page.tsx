@@ -3,7 +3,7 @@ import { getPatientById } from '@/app/actions';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeftCircle, CalendarDays, Weight, Ruler, Phone, NotebookText, Info } from 'lucide-react';
+import { ArrowLeftCircle, CalendarDays, Weight, Ruler, Phone, NotebookText, Info, User } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
@@ -30,16 +30,16 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
   }
 
   const detailItemClass = "flex items-start space-x-3";
-  const iconClass = "h-5 w-5 text-primary mt-1";
+  const iconClass = "h-5 w-5 text-primary mt-1 shrink-0"; // Added shrink-0
   const labelClass = "text-sm font-medium text-muted-foreground";
-  const valueClass = "text-base";
+  const valueClass = "text-base break-words"; // Added break-words for long content
 
   return (
     <div className="flex flex-col flex-1 min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8">
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-primary">Patient Details</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary text-center sm:text-left">{patient.fullName} - Patient Details</h1>
           <Button asChild variant="outline" className="w-full sm:w-auto">
             <Link href="/">
               <ArrowLeftCircle className="mr-2 h-5 w-5" />
@@ -48,11 +48,16 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
           </Button>
         </div>
         <Card className="w-full max-w-3xl mx-auto shadow-xl rounded-xl overflow-hidden">
-          <CardHeader className="bg-card-foreground/5 p-6">
-            <CardTitle className="text-2xl sm:text-3xl text-primary">{patient.fullName}</CardTitle>
-            <CardDescription>Patient ID: {patient.id}</CardDescription>
+          <CardHeader className="bg-primary/10 p-4 sm:p-6"> {/* Slightly adjusted background and padding */}
+            <div className="flex items-center space-x-3">
+              <User className="h-8 w-8 text-primary" />
+              <div>
+                <CardTitle className="text-xl sm:text-2xl text-primary">{patient.fullName}</CardTitle>
+                <CardDescription>Patient ID: {patient.id}</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
+          <CardContent className="p-4 sm:p-6 space-y-6">
             <div className={detailItemClass}>
               <CalendarDays className={iconClass} />
               <div>
@@ -61,14 +66,15 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
               </div>
             </div>
             <div className={detailItemClass}>
-              <Info className={iconClass} /> {/* Generic icon for Gender */}
+              <Info className={iconClass} />
               <div>
                 <h3 className={labelClass}>Gender</h3>
                 <p className={valueClass}>{patient.gender || 'N/A'}</p>
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+            {/* Changed md:grid-cols-2 to sm:grid-cols-2 for earlier two-column layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-6">
               <div className={detailItemClass}>
                 <Weight className={iconClass} />
                 <div>
@@ -96,11 +102,11 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
               <NotebookText className={iconClass} />
               <div>
                 <h3 className={labelClass}>Medical Notes</h3>
-                <p className={`${valueClass} whitespace-pre-wrap bg-muted/30 p-3 rounded-md border`}>{patient.medicalNotes?.trim() ? patient.medicalNotes : 'N/A'}</p>
+                <p className={`${valueClass} whitespace-pre-wrap bg-muted/30 p-3 rounded-md border max-h-60 overflow-y-auto`}>{patient.medicalNotes?.trim() ? patient.medicalNotes : 'No medical notes provided.'}</p> {/* Added max-h and overflow */}
               </div>
             </div>
             <div className={detailItemClass}>
-              <CalendarDays className={iconClass} /> {/* Re-using icon for timestamp */}
+              <CalendarDays className={iconClass} />
               <div>
                 <h3 className={labelClass}>Record Last Updated</h3>
                 <p className={valueClass}>{patient.pickupTimestamp ? format(new Date(patient.pickupTimestamp), 'MMMM d, yyyy HH:mm:ss') : 'N/A'}</p>
@@ -115,4 +121,3 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
     </div>
   );
 }
-
