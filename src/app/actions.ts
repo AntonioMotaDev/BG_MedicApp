@@ -1,7 +1,7 @@
 
 "use server";
 
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, getDoc, type DocumentSnapshot, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Patient, PatientFormData } from "@/lib/schema";
 import { PatientSchema } from "@/lib/schema";
@@ -9,33 +9,127 @@ import { revalidatePath } from "next/cache";
 import { z } from 'zod'; // For ZodError instance check
 
 // Helper to convert Firestore Timestamps to Date objects
-const processPatientDoc = (docSnap: any): Patient => {
+const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => {
   const data = docSnap.data();
-  return {
+  if (!data) {
+    // This path should ideally not be hit if docSnap.exists() is checked by the caller.
+    throw new Error(`No data found for document ${docSnap.id}. Document might not exist.`);
+  }
+
+  let processedDateOfBirth: Date | undefined = undefined;
+  if (data.dateOfBirth) {
+    if (data.dateOfBirth instanceof Timestamp) {
+      processedDateOfBirth = data.dateOfBirth.toDate();
+    } else if (typeof data.dateOfBirth === 'string' || typeof data.dateOfBirth === 'number') {
+      const parsedDate = new Date(data.dateOfBirth);
+      if (!isNaN(parsedDate.getTime())) {
+        processedDateOfBirth = parsedDate;
+      } else {
+        console.warn(`Invalid dateOfBirth string/number for patient ${docSnap.id}: ${data.dateOfBirth}. Will be treated as undefined.`);
+      }
+    } else if (data.dateOfBirth instanceof Date) {
+        processedDateOfBirth = data.dateOfBirth; // Already a JS Date
+    } else {
+        console.warn(`Unrecognized dateOfBirth type for patient ${docSnap.id}:`, typeof data.dateOfBirth, data.dateOfBirth, `. Will be treated as undefined.`);
+    }
+  }
+
+  let processedPickupTimestamp: Date | undefined | null = undefined;
+  if (data.pickupTimestamp === null) { // Handle explicitly stored null
+    processedPickupTimestamp = null;
+  } else if (data.pickupTimestamp) {
+    if (data.pickupTimestamp instanceof Timestamp) {
+      processedPickupTimestamp = data.pickupTimestamp.toDate();
+    } else if (typeof data.pickupTimestamp === 'string' || typeof data.pickupTimestamp === 'number') {
+      const parsedTimestamp = new Date(data.pickupTimestamp);
+      if (!isNaN(parsedTimestamp.getTime())) {
+        processedPickupTimestamp = parsedTimestamp;
+      } else {
+        console.warn(`Invalid pickupTimestamp string/number for patient ${docSnap.id}: ${data.pickupTimestamp}. Will be treated as undefined.`);
+      }
+    } else if (data.pickupTimestamp instanceof Date) {
+        processedPickupTimestamp = data.pickupTimestamp; // Already a JS Date
+    } else {
+        console.warn(`Unrecognized pickupTimestamp type for patient ${docSnap.id}:`, typeof data.pickupTimestamp, data.pickupTimestamp, `. Will be treated as undefined.`);
+    }
+  }
+
+  let weightKgFinal: number | null | undefined = undefined;
+  if (data.weightKg === null) {
+      weightKgFinal = null;
+  } else if (data.weightKg !== undefined) {
+      const num = Number(data.weightKg);
+      if (!isNaN(num)) {
+        weightKgFinal = num;
+      } else {
+        console.warn(`Invalid weightKg for patient ${docSnap.id}: ${data.weightKg}. Will be treated as undefined.`);
+      }
+  }
+
+  let heightCmFinal: number | null | undefined = undefined;
+  if (data.heightCm === null) {
+      heightCmFinal = null;
+  } else if (data.heightCm !== undefined) {
+      const num = Number(data.heightCm);
+      if (!isNaN(num)) {
+        heightCmFinal = num;
+      } else {
+        console.warn(`Invalid heightCm for patient ${docSnap.id}: ${data.heightCm}. Will be treated as undefined.`);
+      }
+  }
+  
+  const patientDataToParse = {
     id: docSnap.id,
-    ...data,
-    dateOfBirth: data.dateOfBirth instanceof Timestamp ? data.dateOfBirth.toDate() : (data.dateOfBirth ? new Date(data.dateOfBirth) : undefined), // Ensure it's a Date or undefined
-    pickupTimestamp: data.pickupTimestamp instanceof Timestamp ? data.pickupTimestamp.toDate() : (data.pickupTimestamp ? new Date(data.pickupTimestamp) : undefined), // Ensure it's a Date or undefined
-  } as Patient;
+    fullName: data.fullName,
+    dateOfBirth: processedDateOfBirth, // Required by schema; if undefined, Zod parse will fail
+    gender: data.gender,
+    weightKg: weightKgFinal, // Optional & nullable in schema
+    heightCm: heightCmFinal,   // Optional & nullable in schema
+    emergencyContact: data.emergencyContact,
+    medicalNotes: data.medicalNotes,
+    pickupTimestamp: processedPickupTimestamp, // Optional & nullable in schema
+  };
+  
+  try {
+    // Validate the processed data against the Zod schema
+    return PatientSchema.parse(patientDataToParse) as Patient;
+  } catch (error) {
+    console.error(`Data for patient ${docSnap.id} failed Zod validation after processing:`, error);
+    console.error("Data that failed validation:", patientDataToParse);
+    // Rethrow or handle as appropriate for your app's error strategy
+    throw new Error(`Processed data for patient ${docSnap.id} is invalid: ${(error as Error).message}`);
+  }
 };
 
 
 export async function addPatient(formData: PatientFormData): Promise<{ success: boolean; error?: string; patient?: Patient }> {
   try {
-    const validatedData = PatientSchema.omit({id: true, pickupTimestamp: true}).parse(formData);
+    // formData is already validated by PatientFormSchema, so dateOfBirth is a Date object.
+    // weightKg/heightCm are numbers or null.
+    const validatedData = PatientFormSchema.parse(formData); // Re-parse just in case, though should be fine.
     
     const docRef = await addDoc(collection(db, "patients"), {
-      ...validatedData,
-      dateOfBirth: validatedData.dateOfBirth, // Store as Date object, Firestore will convert to Timestamp
+      ...validatedData, // validatedData.dateOfBirth is a Date object
       pickupTimestamp: serverTimestamp(),
     });
     revalidatePath("/");
-    // Fetch the newly created document to include its ID and server-generated timestamp
-    // For simplicity, we'll just return success here. The table will re-fetch.
-    return { success: true, patient: { ...validatedData, id: docRef.id, pickupTimestamp: new Date() } as Patient }; // Approximate pickupTimestamp
+    // Fetch the newly created document to include its ID and server-generated timestamp for immediate use if needed,
+    // but for simplicity here, we are relying on revalidatePath and subsequent refetch by the table.
+    // Approximate pickupTimestamp for optimistic UI update if returning patient object.
+    const newPatientApprox: Patient = {
+        ...validatedData,
+        id: docRef.id,
+        pickupTimestamp: new Date(), // Approximate, server will set actual
+        // Ensure all fields from Patient schema are present if returning Patient type
+        weightKg: validatedData.weightKg ?? null,
+        heightCm: validatedData.heightCm ?? null,
+        medicalNotes: validatedData.medicalNotes ?? null,
+    };
+    return { success: true, patient: newPatientApprox };
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors.map(e => e.message).join(', ') };
+      console.error("ZodError in addPatient:", error.errors);
+      return { success: false, error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
     }
     console.error("Error in addPatient:", error);
     return { success: false, error: error.message || "Failed to add patient." };
@@ -47,7 +141,17 @@ export async function getPatients(): Promise<Patient[]> {
     const patientsCollection = collection(db, "patients");
     const q = query(patientsCollection, orderBy("pickupTimestamp", "desc"));
     const patientSnapshot = await getDocs(q);
-    const patientList = patientSnapshot.docs.map(processPatientDoc);
+    // Use .map and .filter to handle potential errors during individual document processing
+    const patientList = patientSnapshot.docs
+      .map(docSnap => {
+        try {
+          return processPatientDoc(docSnap);
+        } catch (error) {
+          console.error(`Failed to process patient document ${docSnap.id}:`, error);
+          return null; // Skip this document in the final list
+        }
+      })
+      .filter(patient => patient !== null) as Patient[]; // Type assertion after filtering out nulls
     return patientList;
   } catch (error: any) {
     console.error("Error fetching patients:", error);
@@ -58,22 +162,32 @@ export async function getPatients(): Promise<Patient[]> {
 export async function updatePatient(id: string, formData: Partial<PatientFormData>): Promise<{ success: boolean; error?: string }> {
    try {
     // Only validate fields that are present in formData
-    const partialSchema = PatientSchema.omit({id: true, pickupTimestamp: true}).partial();
+    const partialSchema = PatientFormSchema.partial(); // Create a partial schema for update
     const validatedData = partialSchema.parse(formData);
 
     const patientDoc = doc(db, "patients", id);
     
     const updatePayload: any = { ...validatedData };
+    // If dateOfBirth is being updated, it's already a Date object from Zod coercion
     if (validatedData.dateOfBirth) {
-      updatePayload.dateOfBirth = validatedData.dateOfBirth; // Store as Date, Firestore converts
+      updatePayload.dateOfBirth = validatedData.dateOfBirth;
     }
+    // Ensure numeric fields are numbers or null
+    if ('weightKg' in validatedData) {
+        updatePayload.weightKg = validatedData.weightKg === undefined ? null : validatedData.weightKg;
+    }
+    if ('heightCm' in validatedData) {
+        updatePayload.heightCm = validatedData.heightCm === undefined ? null : validatedData.heightCm;
+    }
+
 
     await updateDoc(patientDoc, updatePayload);
     revalidatePath("/");
     return { success: true };
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors.map(e => e.message).join(', ') };
+      console.error("ZodError in updatePatient:", error.errors);
+      return { success: false, error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ') };
     }
     console.error("Error in updatePatient:", error);
     return { success: false, error: error.message || "Failed to update patient." };
@@ -102,17 +216,15 @@ export async function getPatientById(id: string): Promise<Patient | null> {
     const docSnap = await getDoc(patientDocRef);
 
     if (docSnap.exists()) {
+      // Attempt to process the document. If processing fails (e.g., Zod validation),
+      // it will throw an error, which will be caught by the catch block.
       return processPatientDoc(docSnap);
     } else {
       console.log(`No such patient document with ID: ${id}`);
       return null;
     }
   } catch (error: any) {
-    // Log the specific ID for which the fetch failed, along with the error.
-    console.error(`Error fetching patient by ID (${id}):`, error);
-    // The error message often includes "client is offline" if that's the case.
-    // No need to return a custom message here as the console.error provides details.
+    console.error(`Error fetching or processing patient by ID (${id}):`, error);
     return null;
   }
 }
-
