@@ -1,11 +1,12 @@
 
 "use server";
 
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy, Timestamp, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Patient, PatientFormData } from "@/lib/schema";
 import { PatientSchema } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
+import { z } from 'zod'; // For ZodError instance check
 
 // Helper to convert Firestore Timestamps to Date objects
 const processPatientDoc = (docSnap: any): Patient => {
@@ -13,8 +14,8 @@ const processPatientDoc = (docSnap: any): Patient => {
   return {
     id: docSnap.id,
     ...data,
-    dateOfBirth: data.dateOfBirth instanceof Timestamp ? data.dateOfBirth.toDate() : new Date(data.dateOfBirth),
-    pickupTimestamp: data.pickupTimestamp instanceof Timestamp ? data.pickupTimestamp.toDate() : new Date(data.pickupTimestamp),
+    dateOfBirth: data.dateOfBirth instanceof Timestamp ? data.dateOfBirth.toDate() : (data.dateOfBirth ? new Date(data.dateOfBirth) : undefined), // Ensure it's a Date or undefined
+    pickupTimestamp: data.pickupTimestamp instanceof Timestamp ? data.pickupTimestamp.toDate() : (data.pickupTimestamp ? new Date(data.pickupTimestamp) : undefined), // Ensure it's a Date or undefined
   } as Patient;
 };
 
@@ -85,5 +86,22 @@ export async function deletePatient(id: string): Promise<{ success: boolean; err
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || "Failed to delete patient." };
+  }
+}
+
+export async function getPatientById(id: string): Promise<Patient | null> {
+  try {
+    const patientDocRef = doc(db, "patients", id);
+    const docSnap = await getDoc(patientDocRef);
+
+    if (docSnap.exists()) {
+      return processPatientDoc(docSnap);
+    } else {
+      console.log("No such patient document with ID:", id);
+      return null;
+    }
+  } catch (error: any) {
+    console.error("Error fetching patient by ID:", error);
+    return null;
   }
 }

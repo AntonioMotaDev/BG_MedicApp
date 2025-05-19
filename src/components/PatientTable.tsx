@@ -4,6 +4,7 @@
 import type { FC } from 'react';
 import { useState, useMemo } from 'react';
 import type { Patient } from "@/lib/schema";
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit3, Trash2, ArrowUpDown, FileText, Files } from 'lucide-react'; // Replaced FileCsv with Files
+import { MoreHorizontal, Edit3, Trash2, ArrowUpDown, FileText, Files, Eye } from 'lucide-react'; // Replaced FileCsv with Files, Added Eye
 import { format } from 'date-fns';
 
 interface PatientTableProps {
@@ -136,6 +137,11 @@ const PatientTable: FC<PatientTableProps> = ({ patients, onEdit, onDelete }) => 
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/patients/${patient.id}`}>
+                              <Eye className="mr-2 h-4 w-4" /> View
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => onEdit(patient)}>
                             <Edit3 className="mr-2 h-4 w-4" /> Edit
                           </DropdownMenuItem>
