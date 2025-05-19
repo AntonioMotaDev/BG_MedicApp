@@ -64,7 +64,7 @@ const MainMenuPage: NextPage = () => {
   return (
     <div className="flex flex-col flex-1"> {/* This structure fits within SidebarInset */}
       <Header />
-      <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center justify-center">
+      <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center">
         <Card className="w-full max-w-2xl mb-8 shadow-lg rounded-lg">
           <CardHeader className="text-center p-4 sm:p-6">
             <LayoutGrid className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-primary mb-2" />
