@@ -9,7 +9,6 @@ import { addPatient, updatePatient } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-// import { Label } from "@/components/ui/label"; // Unused
 import {
   Select,
   SelectContent,
@@ -27,14 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
 interface PatientFormProps {
@@ -44,25 +35,42 @@ interface PatientFormProps {
 
 const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
   const { toast } = useToast();
+
+  // Prepare default dateOfBirth string for the input
+  // The input type="date" requires value in "yyyy-MM-dd" format or empty string
+  let initialDateOfBirthString = "";
+  if (patient?.dateOfBirth) {
+    try {
+      const dateObj = new Date(patient.dateOfBirth); // patient.dateOfBirth should be a Date object
+      if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
+        initialDateOfBirthString = format(dateObj, "yyyy-MM-dd");
+      } else {
+        console.warn("Invalid dateOfBirth from patient data for form:", patient.dateOfBirth);
+      }
+    } catch (e) {
+      console.error("Error formatting dateOfBirth for form:", e);
+    }
+  }
+
+
   const form = useForm<PatientFormData>({
     resolver: zodResolver(PatientFormSchema),
     defaultValues: patient
       ? {
-          fullName: patient.fullName || "", 
-          // Ensure dateOfBirth is a Date object for the form's default value if editing
-          dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth) : undefined,
+          fullName: patient.fullName || "",
+          dateOfBirth: initialDateOfBirthString, // Correctly formatted string or ""
           gender: patient.gender,
-          weightKg: patient.weightKg ?? undefined, 
-          heightCm: patient.heightCm ?? undefined,
-          emergencyContact: patient.emergencyContact || "", 
-          medicalNotes: patient.medicalNotes || "", 
+          weightKg: patient.weightKg ?? null, // Default to null if undefined or null
+          heightCm: patient.heightCm ?? null, // Default to null if undefined or null
+          emergencyContact: patient.emergencyContact || "",
+          medicalNotes: patient.medicalNotes || "",
         }
       : {
           fullName: "",
-          dateOfBirth: undefined, // Use undefined for Popover default
-          gender: undefined, 
-          weightKg: undefined,
-          heightCm: undefined,
+          dateOfBirth: "", // Empty string for new patient
+          gender: undefined,
+          weightKg: null, // Default to null for new patient
+          heightCm: null, // Default to null for new patient
           emergencyContact: "",
           medicalNotes: "",
         },
@@ -70,9 +78,8 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
 
   const onSubmit = async (data: PatientFormData) => {
     let result;
-    // The 'data' object here is already of type PatientFormData,
-    // meaning data.dateOfBirth is already a Date object due to Zod coercion.
-    // It can be passed directly to the server actions.
+    // data.dateOfBirth is already a Date object due to Zod coercion from PatientFormSchema.
+    // data.weightKg / data.heightCm will be number or null (coerced to 0 by Zod if null)
 
     if (patient && patient.id) {
       result = await updatePatient(patient.id, data);
@@ -116,41 +123,22 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
           control={form.control}
           name="dateOfBirth"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel>Date of Birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input
+                  type="date"
+                  placeholder="YYYY-MM-DD"
+                  {...field}
+                  value={field.value instanceof Date ? format(field.value, "yyyy-MM-dd") : field.value || ''}
+                  onChange={(e) => {
+                    // Pass the string value directly, or undefined if empty, to let Zod handle coercion/validation.
+                    field.onChange(e.target.value ? e.target.value : undefined);
+                  }}
+                />
+              </FormControl>
               <FormDescription>
-                Your date of birth is used to calculate your age.
+                Select or type your date of birth (YYYY-MM-DD).
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -180,7 +168,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
             </FormItem>
           )}
         />
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -189,7 +177,13 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Weight (kg)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="70" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} value={field.value ?? ''} />
+                  <Input 
+                    type="number" 
+                    placeholder="70" 
+                    {...field} 
+                    value={field.value === null || field.value === undefined ? '' : String(field.value)} // Ensure input value is string or number
+                    onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} // Pass null for empty, or number
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -203,7 +197,13 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
               <FormItem>
                 <FormLabel>Height (cm)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="175" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.valueAsNumber)} value={field.value ?? ''}/>
+                  <Input 
+                    type="number" 
+                    placeholder="175" 
+                    {...field} 
+                    value={field.value === null || field.value === undefined ? '' : String(field.value)} // Ensure input value is string or number
+                    onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} // Pass null for empty, or number
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -239,7 +239,7 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
             </FormItem>
           )}
         />
-        
+
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>

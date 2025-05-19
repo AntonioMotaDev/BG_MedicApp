@@ -12,6 +12,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Check for missing project ID, which is crucial for Firestore.
+if (!firebaseConfig.projectId) {
+  console.error(
+    "Firebase projectId is not defined in environment variables. " +
+    "Please ensure NEXT_PUBLIC_FIREBASE_PROJECT_ID is set correctly in your .env.local file. " +
+    "Firestore operations will likely fail."
+  );
+}
+
+
 let app: FirebaseApp;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
