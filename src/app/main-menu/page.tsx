@@ -72,18 +72,18 @@ const MainMenuPage: NextPage = () => {
             <CardDescription>Select an option to proceed.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
-            <Link href="/" passHref legacyBehavior>
-              <Button variant="outline" size="lg" className="w-full h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">
+            <Button asChild variant="outline" size="lg" className="w-full h-24 sm:h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">
+              <Link href="/">
                 <Users className="h-8 w-8 mb-2 text-primary" />
                 Manage Patients
-              </Button>
-            </Link>
-            <Link href="/profile" passHref legacyBehavior>
-              <Button variant="outline" size="lg" className="w-full h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="w-full h-24 sm:h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">
+              <Link href="/profile">
                 <UserCog className="h-8 w-8 mb-2 text-accent" />
                 User Profile
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardContent>
         </Card>
          <p className="text-sm text-muted-foreground text-center">
