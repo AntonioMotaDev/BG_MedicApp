@@ -69,7 +69,7 @@ const MainMenuPage: NextPage = () => {
           <CardHeader className="text-center p-4 sm:p-6">
             <LayoutGrid className="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-primary mb-2" />
             <CardTitle className="text-2xl sm:text-3xl">Main Menu</CardTitle>
-            <CardDescription>Select an option to proceed.</CardDescription>
+            <CardDescription></CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 p-4 sm:p-6">
             <Button asChild variant="outline" size="lg" className="w-full h-24 sm:h-28 md:h-32 text-base md:text-lg flex flex-col items-center justify-center shadow-md hover:shadow-lg transition-shadow rounded-lg p-4">

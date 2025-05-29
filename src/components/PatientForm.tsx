@@ -1,14 +1,19 @@
-
 "use client";
 
-import type { FC } from 'react';
+import { FC } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PatientFormSchema, type PatientFormData, type Patient } from "@/lib/schema";
-import { addPatient, updatePatient } from "@/app/actions";
+import { PatientFormSchema, PatientFormData } from "@/lib/schema";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -16,194 +21,85 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns"
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { z } from "zod";
 
 interface PatientFormProps {
-  patient?: Patient; // For editing
+  onSubmit: (data: z.infer<typeof PatientFormSchema>) => Promise<void>;
   onClose: () => void;
+  initialData?: Partial<z.infer<typeof PatientFormSchema>>;
 }
 
-const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
-  const { toast } = useToast();
-
-  // Prepare default dateOfBirth string for the input
-  // The input type="date" requires value in "yyyy-MM-dd" format or empty string
-  let initialDateOfBirthString = "";
-  if (patient?.dateOfBirth) {
-    try {
-      const dateObj = new Date(patient.dateOfBirth); // patient.dateOfBirth should be a Date object
-      if (dateObj instanceof Date && !isNaN(dateObj.getTime())) {
-        initialDateOfBirthString = format(dateObj, "yyyy-MM-dd");
-      } else {
-        console.warn("Invalid dateOfBirth from patient data for form:", patient.dateOfBirth);
-      }
-    } catch (e) {
-      console.error("Error formatting dateOfBirth for form:", e);
-    }
-  }
-
-
-  const form = useForm<PatientFormData>({
+const PatientForm: FC<PatientFormProps> = ({ onSubmit, onClose, initialData }) => {
+  const form = useForm<z.infer<typeof PatientFormSchema>>({
     resolver: zodResolver(PatientFormSchema),
-    defaultValues: patient
-      ? {
-          fullName: patient.fullName || "",
-          dateOfBirth: initialDateOfBirthString, // Correctly formatted string or ""
-          gender: patient.gender,
-          weightKg: patient.weightKg ?? null, // Default to null if undefined or null
-          heightCm: patient.heightCm ?? null, // Default to null if undefined or null
-          emergencyContact: patient.emergencyContact || "",
-          medicalNotes: patient.medicalNotes || "",
-        }
-      : {
-          fullName: "",
-          dateOfBirth: "", // Empty string for new patient
-          gender: undefined,
-          weightKg: null, // Default to null for new patient
-          heightCm: null, // Default to null for new patient
-          emergencyContact: "",
-          medicalNotes: "",
-        },
+    defaultValues: initialData || {
+      paternalLastName: "",
+      maternalLastName: "",
+      firstName: "",
+      age: 0,
+      sex: "Sin definir",
+      street: "",
+      exteriorNumber: "",
+      interiorNumber: "",
+      neighborhood: "",
+      city: "",
+      phone: "",
+      insurance: "",
+      responsiblePerson: "",
+    },
   });
 
-  const onSubmit = async (data: PatientFormData) => {
-    let result;
-    // data.dateOfBirth is already a Date object due to Zod coercion from PatientFormSchema.
-    // data.weightKg / data.heightCm will be number or null (coerced to 0 by Zod if null)
-
-    if (patient && patient.id) {
-      result = await updatePatient(patient.id, data);
-    } else {
-      result = await addPatient(data);
-    }
-
-    if (result.success) {
-      toast({
-        title: patient ? "Patient Updated" : "Patient Added",
-        description: `Patient record ${patient ? 'updated' : 'created'} successfully.`,
-      });
+  const handleSubmit = async (data: PatientFormData) => {
+    try {
+      await onSubmit(data);
+      toast.success("Paciente guardado exitosamente");
       onClose();
-    } else {
-      toast({
-        title: "Error",
-        description: result.error || `Failed to ${patient ? 'update' : 'add'} patient.`,
-        variant: "destructive",
-      });
+    } catch (error) {
+      toast.error("Error al guardar el paciente");
+      console.error("Error submitting form:", error);
     }
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-1">
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="dateOfBirth"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Date of Birth</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  placeholder="YYYY-MM-DD"
-                  {...field}
-                  value={field.value instanceof Date ? format(field.value, "yyyy-MM-dd") : field.value || ''}
-                  onChange={(e) => {
-                    // Pass the string value directly, or undefined if empty, to let Zod handle coercion/validation.
-                    field.onChange(e.target.value ? e.target.value : undefined);
-                  }}
-                />
-              </FormControl>
-              <FormDescription>
-                Select or type your date of birth (YYYY-MM-DD).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gender</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                  <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
-            name="weightKg"
+            name="paternalLastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Weight (kg)</FormLabel>
+                <FormLabel>Apellido Paterno:</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="70" 
-                    {...field} 
-                    value={field.value === null || field.value === undefined ? '' : String(field.value)} // Ensure input value is string or number
-                    onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} // Pass null for empty, or number
-                  />
+                  <Input placeholder="Apellido paterno" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
-            name="heightCm"
+            name="maternalLastName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Height (cm)</FormLabel>
+                <FormLabel>Apellido Materno:</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="175" 
-                    {...field} 
-                    value={field.value === null || field.value === undefined ? '' : String(field.value)} // Ensure input value is string or number
-                    onChange={e => field.onChange(e.target.value === '' ? null : e.target.valueAsNumber)} // Pass null for empty, or number
-                  />
+                  <Input placeholder="Apellido materno" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre(s):</FormLabel>
+                <FormControl>
+                  <Input placeholder="Nombre(s)" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -211,40 +107,200 @@ const PatientForm: FC<PatientFormProps> = ({ patient, onClose }) => {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="emergencyContact"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Emergency Contact Phone</FormLabel>
-              <FormControl>
-                <Input type="tel" placeholder="+12223334444" {...field} value={field.value || ''} />
-              </FormControl>
-              <FormDescription>Include country code if applicable.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <FormField
-          control={form.control}
-          name="medicalNotes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Medical Notes</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Relevant medical history, allergies, etc." rows={4} {...field} value={field.value || ''}/>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? (patient ? "Updating..." : "Adding...") : (patient ? "Update Patient" : "Add Patient")}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+              name="age"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Edad:</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Edad" 
+                    {...field} 
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="sex"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sexo:</FormLabel>
+                <FormControl>
+                  <div className="flex gap-4 text-sm">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="Masculino"
+                        checked={field.value === "Masculino"}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="hidden"
+                      />
+                      <span className={`px-4 py-2 rounded-md cursor-pointer transition-colors ${
+                        field.value === "Masculino" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-secondary hover:bg-secondary/80"
+                      }`}>
+                        Masculino
+                      </span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="Femenino"
+                        checked={field.value === "Femenino"}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="hidden"
+                      />
+                      <span className={`px-4 py-2 rounded-md cursor-pointer transition-colors ${
+                        field.value === "Femenino" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-secondary hover:bg-secondary/80"
+                      }`}>
+                        Femenino
+                      </span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        value="Sin definir"
+                        checked={field.value === "Sin definir"}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        className="hidden"
+                      />
+                      <span className={`px-4 py-2 rounded-md cursor-pointer transition-colors ${
+                        field.value === "Sin definir" 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-secondary hover:bg-secondary/80"
+                      }`}>
+                        Sin definir
+                      </span>
+                    </label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="street"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Calle:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Calle" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="exteriorNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número Exterior:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Número exterior" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="interiorNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Número Interior:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Número interior (opcional)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="neighborhood"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Colonia:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Colonia" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Ciudad:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Municipio" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Teléfono:</FormLabel>
+                <FormControl>
+                  <Input placeholder="444 444 4444" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="insurance"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Derechohabiencia:</FormLabel>
+                <FormControl>
+                  <Input placeholder="IMSS, ISSSTE, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="responsiblePerson"
+            render={({ field }) => (
+              <FormItem className="col-span-2">
+                <FormLabel>Persona Responsable:</FormLabel>
+                <FormControl>
+                  <Input placeholder="Padre, Madre, Tutor, etc." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
           </Button>
+          <Button type="submit">Guardar</Button>
         </div>
       </form>
     </Form>

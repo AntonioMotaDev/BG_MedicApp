@@ -15,10 +15,10 @@ body {
     --card-foreground: 217 30% 30%; /* Darker Blue/Gray */
     --popover: 0 0% 100%; /* White */
     --popover-foreground: 217 30% 30%; /* Darker Blue/Gray */
-    --primary: 217 100% 28%; /* Deep Blue #00308F */
+    --primary: 187 96% 28%; /* Teal #037F8C */
     --primary-foreground: 0 0% 98%; /* Light color for text on primary elements */
     --secondary: 0 0% 90%; /* Slightly darker gray for secondary elements */
-    --secondary-foreground: 217 100% 28%; /* Deep Blue for text on secondary */
+    --secondary-foreground: 187 100% 37%; /* #04BFBF */
     --muted: 0 0% 90%; /* Similar to secondary for muted elements */
     --muted-foreground: 0 0% 45.1%; /* Muted text color */
     --accent: 180 100% 25.1%; /* Teal #008080 */

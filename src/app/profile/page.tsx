@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { NextPage } from 'next';
@@ -11,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 // import type { Metadata } from 'next'; // Metadata not used directly in "use client"
 
 // export const metadata: Metadata = { // Cannot be used in "use client" component
@@ -25,6 +26,8 @@ const ProfilePage: NextPage = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     setIsClient(true); 
@@ -42,9 +45,25 @@ const ProfilePage: NextPage = () => {
     }
   }, [router]);
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Profile changes saved (not really, this is a demo).');
+    setIsLoading(true);
+
+    try {
+      // Implementar la lógica de actualización de perfil aquí
+      toast({
+        title: "Perfil actualizado",
+        description: "Sus datos han sido actualizados correctamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Ocurrió un error al actualizar su perfil. Por favor, inténtelo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isClient || !isAuthCheckComplete) {
@@ -94,58 +113,53 @@ const ProfilePage: NextPage = () => {
                 <div className="mx-auto bg-primary text-primary-foreground rounded-full h-16 w-16 flex items-center justify-center mb-4">
                     <UserCog className="h-8 w-8" />
                 </div>
-                <CardTitle className="text-2xl">User Profile</CardTitle>
-                <CardDescription>Manage your account settings and personal information.</CardDescription>
+                <CardTitle className="text-2xl">Perfil</CardTitle>
+                <CardDescription>Administre su información personal</CardDescription>
                 </CardHeader>
                 <CardContent>
-                <form onSubmit={handleSaveChanges} className="space-y-6">
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                        <Avatar className="h-20 w-20">
+                            <AvatarImage src="/placeholder-avatar.jpg" alt="Avatar" />
+                            <AvatarFallback>JP</AvatarFallback>
+                        </Avatar>
+                        <Button variant="outline" size="sm">
+                            Cambiar foto
+                        </Button>
+                    </div>
                     <div className="space-y-2">
-                    <Label htmlFor="userName">Display Name</Label>
+                    <Label htmlFor="name">Nombre completo</Label>
                     <Input 
-                        id="userName" 
+                        id="name" 
                         type="text" 
                         value={userName} 
                         onChange={(e) => setUserName(e.target.value)} 
-                        placeholder="Your display name"
+                        placeholder="Juan Pérez"
+                        required
                     />
                     </div>
                     <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
+                    <Label htmlFor="email">Correo electrónico</Label>
                     <Input 
                         id="email" 
                         type="email" 
                         value={userEmail} 
                         disabled
                         className="cursor-not-allowed bg-muted/50"
+                        required
                     />
                         <p className="text-xs text-muted-foreground">Email address cannot be changed here.</p>
                     </div>
                     <div className="space-y-2">
-                    <Label htmlFor="currentPassword">Current Password (Optional)</Label>
+                    <Label htmlFor="phone">Teléfono</Label>
                     <Input 
-                        id="currentPassword" 
-                        type="password" 
-                        placeholder="Enter current password to change it" 
+                        id="phone" 
+                        type="tel" 
+                        placeholder="+34612345678"
                     />
                     </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="newPassword">New Password (Optional)</Label>
-                    <Input 
-                        id="newPassword" 
-                        type="password" 
-                        placeholder="Enter new password" 
-                    />
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm New Password (Optional)</Label>
-                    <Input 
-                        id="confirmPassword" 
-                        type="password" 
-                        placeholder="Confirm new password" 
-                    />
-                    </div>
-                    <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                    Save Changes
+                    <Button type="submit" disabled={isLoading} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
+                    {isLoading ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </form>
                 </CardContent>

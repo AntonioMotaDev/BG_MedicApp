@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -69,21 +68,24 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
       <PatientTable
         patients={patients}
         onEdit={handleEditPatient}
-        onDelete={(patientId) => {
+        onDelete={async (patientId) => {
           const patientToDelete = patients.find(p => p.id === patientId);
           if (patientToDelete) {
             const confirmDeleteTrigger = document.getElementById(`delete-confirm-trigger-${patientId}`);
             if (confirmDeleteTrigger) {
               confirmDeleteTrigger.click();
             } else {
-               if (window.confirm(`Are you sure you want to delete patient ${patientToDelete.fullName}?`)) {
+               if (window.confirm(`Are you sure you want to delete patient ${patientToDelete.firstName} ${patientToDelete.paternalLastName}?`)) {
                  handleDeletePatient(patientId);
                }
             }
           }
         }}
+        onExport={async () => {}}
+        // onViewDetails prop is no longer used for dialog, navigation is handled in PatientTable
       />
 
+      {/* Edit Patient Dialog */}
       <Dialog open={isEditFormOpen} onOpenChange={(isOpen) => {
           if (!isOpen) closeEditForm(); // Ensure form closes correctly
           else setIsEditFormOpen(true);
@@ -95,10 +97,18 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
               Update the patient's details below.
             </DialogDescription>
           </DialogHeader>
-          <PatientForm patient={editingPatient} onClose={closeEditForm} />
+          <PatientForm 
+            initialData={editingPatient} 
+            onClose={closeEditForm} 
+            onSubmit={async (data) => {
+              // Handle form submission - this will likely involve an updatePatient action
+              closeEditForm();
+            }}
+          />
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Dialogs */}
       {patients.map(p => p.id && (
          <AlertDialog key={`alert-${p.id}`}>
             <AlertDialogTrigger id={`delete-confirm-trigger-${p.id}`} className="hidden">Delete</AlertDialogTrigger>
@@ -108,7 +118,7 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
                   <AlertTriangle className="inline-block mr-2 text-destructive" /> Are you absolutely sure?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the patient record for {p.fullName}.
+                  This action cannot be undone. This will permanently delete the patient record for {p.firstName} {p.paternalLastName}.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

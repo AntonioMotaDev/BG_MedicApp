@@ -1,0 +1,56 @@
+📁 src/
+├── 📁 app/
+│   ├── 📁 dashboard/
+│   │   └── page.tsx (DashboardPage - Página principal con menú de navegación)
+│   ├── 📁 main-menu/
+│   │   └── page.tsx (MainMenuPage - Menú principal con autenticación)
+│   ├── 📁 reports/
+│   │   └── page.tsx (ReportsPage - Generación de reportes)
+│   ├── layout.tsx (RootLayout - Layout principal con Sidebar y Header)
+│   └── globals.css
+├── 📁 components/
+│   ├── 📁 ui/
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── scroll-area.tsx
+│   │   └── toaster.tsx
+│   ├── Header.tsx (Componente de encabezado)
+│   ├── Sidebar.tsx (Barra lateral navegable)
+│   └── Footer.tsx (Componente de pie de página)
+├── 📁 hooks/
+│   └── use-toast.ts (Hook personalizado para notificaciones)
+└── 📁 lib/
+    └── utils.ts (Utilidades generales)
+
+Tecnologías utilizadas:
+
+1. Frontend:
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+- Lucide Icons
+
+2. Estado y Navegación:
+- React Hooks: Gestión de estado local
+- Next.js Router: Enrutamiento de la aplicación
+- LocalStorage: Almacenamiento del estado de autenticación
+
+3. Estructura y Organización:
+- App Router: Nuevo sistema de enrutamiento de Next.js
+- Componentes Modulares: Arquitectura basada en componentes
+- Layouts Anidados: Sistema de layouts de Next.js
+
+4. Características Principales:
+- Autenticación del lado del cliente
+- Navegación responsive
+- Sistema de notificaciones
+- Interfaz de usuario moderna y accesible
+
+Estructura de rutas:
+- /dashboard: Página principal
+- /: Gestión de pacientes
+- /reports: Generación de reportes
+- /appointments: Gestión de citas
+- /profile: Perfil de usuario
+- /settings: Configuración

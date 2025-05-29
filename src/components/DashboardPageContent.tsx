@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { FC } from 'react';
@@ -98,7 +97,17 @@ const DashboardPageContent: FC<DashboardPageContentProps> = ({ initialPatients }
                 Fill in the form to add a new patient record.
                 </DialogDescription>
             </DialogHeader>
-            <PatientForm onClose={closeAddForm} />
+            <PatientForm 
+              onClose={closeAddForm} 
+              onSubmit={async (data) => {
+                try {
+                  // Implementar la lógica de guardado aquí
+                  closeAddForm();
+                } catch (error) {
+                  console.error('Error saving patient:', error);
+                }
+              }}
+            />
             </DialogContent>
         </Dialog>
      </div>

@@ -1,4 +1,4 @@
-# **App Name**: RescueDoc
+# **App Name**: BG-MedApp
 
 ## Core Features:
 
