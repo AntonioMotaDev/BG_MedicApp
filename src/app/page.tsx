@@ -1,38 +1,38 @@
 "use client";
 
-import { FC, useEffect, useState } from 'react';
+import { FC, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { Patient } from '@/lib/schema';
-import { patientService } from '@/lib/services/patientService';
+import { patientService } from '@/lib/services/patientService'; // Using mock service
 
 // Components
 import PatientTable from '@/components/PatientTable';
-import PatientDetails from '@/components/PatientDetails';
+// PatientDetails component is for inline display, navigation is to /patients/[id]
 import ConfirmDialog from '@/components/ConfirmDialog';
 import SearchBar from '@/components/SearchBar';
+import PatientForm from '@/components/PatientForm'; // For Add/Edit Modals
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 
 const Home: FC = () => {
   const router = useRouter();
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isAddPatientDialogOpen, setIsAddPatientDialogOpen] = useState(false);
+  const [isEditPatientDialogOpen, setIsEditPatientDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Cargar pacientes
-  useEffect(() => {
-    loadPatients();
-  }, []);
-
-  const loadPatients = async () => {
+  const loadPatients = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await patientService.getAllPatients();
+      const data = await patientService.getAllPatients(); // Using mock service
       setPatients(data);
     } catch (error) {
       toast({
@@ -43,18 +43,21 @@ const Home: FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Buscar pacientes
+  useEffect(() => {
+    loadPatients();
+  }, [loadPatients]);
+
   useEffect(() => {
     const searchPatients = async () => {
       if (!searchTerm.trim()) {
         await loadPatients();
         return;
       }
-
+      setIsLoading(true);
       try {
-        const results = await patientService.searchPatients(searchTerm);
+        const results = await patientService.searchPatients(searchTerm); // Using mock service
         setPatients(results);
       } catch (error) {
         toast({
@@ -62,37 +65,52 @@ const Home: FC = () => {
           description: "Error al buscar pacientes.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    const debounceTimer = setTimeout(searchPatients, 300);
+    const debounceTimer = setTimeout(() => {
+      searchPatients();
+    }, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchTerm]);
+  }, [searchTerm, loadPatients, toast]);
 
   const handleAddPatient = () => {
-    router.push('/patients/new');
+    setSelectedPatient(null); // Ensure no lingering data
+    setIsAddPatientDialogOpen(true);
   };
 
   const handleEditPatient = (patient: Patient) => {
-    router.push(`/patients/${patient.id}/edit`);
+    setSelectedPatient(patient);
+    setIsEditPatientDialogOpen(true);
   };
 
   const handleViewDetails = (patient: Patient) => {
+    if (patient.id) {
+      router.push(`/patients/${patient.id}`);
+    } else {
+      toast({title: "Error", description: "ID de paciente no válido.", variant: "destructive" });
+    }
+  };
+  
+  const openDeleteConfirmDialog = (patient: Patient) => {
     setSelectedPatient(patient);
-    setIsDetailsOpen(true);
+    setIsDeleteDialogOpen(true);
   };
 
-  const handleDeletePatient = async (patientId: string) => {
+  const handleDeleteConfirmed = async () => {
+    if (!selectedPatient?.id) return;
     try {
-      const success = await patientService.deletePatient(patientId);
+      const success = await patientService.deletePatient(selectedPatient.id); // Using mock service
       if (success) {
         toast({
           title: "Paciente Eliminado",
           description: "El registro del paciente ha sido eliminado exitosamente.",
         });
-        await loadPatients();
+        await loadPatients(); // Refresh list
       } else {
-        throw new Error("No se pudo eliminar el paciente");
+        throw new Error("No se pudo eliminar el paciente desde el servicio");
       }
     } catch (error) {
       toast({
@@ -100,30 +118,33 @@ const Home: FC = () => {
         description: "Ocurrió un error al eliminar el paciente. Por favor, inténtelo de nuevo.",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedPatient(null);
     }
   };
 
   const handleExportPatient = async (patient: Patient) => {
     try {
-      // Aquí implementamos la lógica de exportación
-      const patientData = {
+      const fullName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName || ''}`.trim();
+      const patientDataToExport = {
         id: patient.id,
-        fullName: patient.fullName,
-        dateOfBirth: patient.dateOfBirth,
-        gender: patient.gender,
-        emergencyContact: patient.emergencyContact,
-        email: patient.email,
+        fullName: fullName,
+        dateOfBirth: patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "yyyy-MM-dd") : undefined,
+        sex: patient.sex,
         phone: patient.phone,
-        address: patient.address,
+        emergencyContact: patient.emergencyContact,
         weightKg: patient.weightKg,
         heightCm: patient.heightCm,
-        bloodType: patient.bloodType,
-        allergies: patient.allergies,
-        medicalNotes: patient.medicalNotes
+        medicalNotes: patient.medicalNotes,
+        // street: patient.street, // Example: if you want to add more fields
+        // exteriorNumber: patient.exteriorNumber,
+        // neighborhood: patient.neighborhood,
+        // city: patient.city,
+        // insurance: patient.insurance,
       };
       
-      // Convertir a JSON y descargar
-      const blob = new Blob([JSON.stringify(patientData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(patientDataToExport, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -145,12 +166,19 @@ const Home: FC = () => {
       });
     }
   };
+  
+  const handleFormSubmitSuccess = () => {
+    setIsAddPatientDialogOpen(false);
+    setIsEditPatientDialogOpen(false);
+    loadPatients(); // Refresh the list
+  };
+
 
   return (
     <main className="container mx-auto py-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold">Gestión de Pacientes</h1>
-        <Button onClick={handleAddPatient}>
+        <Button onClick={handleAddPatient} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Agregar Paciente
         </Button>
@@ -159,43 +187,82 @@ const Home: FC = () => {
       <SearchBar
         value={searchTerm}
         onChange={setSearchTerm}
-        placeholder="Buscar por nombre, género o contacto..."
+        placeholder="Buscar por nombre, teléfono, sexo..."
       />
 
-      <PatientTable
-        patients={patients}
-        onEdit={handleEditPatient}
-        onDelete={async (patientId: string) => {
-          setSelectedPatient(patients.find(p => p.id === patientId) || null);
-          setIsDeleteDialogOpen(true);
-        }}
-        onViewDetails={handleViewDetails}
-        onExport={handleExportPatient}
-        isLoading={isLoading}
-      />
+      {isLoading && (
+        <div className="flex justify-center items-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-2">Cargando pacientes...</p>
+        </div>
+      )}
 
-      {isDetailsOpen && selectedPatient && (
-        <PatientDetails
-          patient={selectedPatient}
-          onClose={() => setIsDetailsOpen(false)}
-          onEdit={() => {
-            setIsDetailsOpen(false);
-            handleEditPatient(selectedPatient);
-          }}
+      {!isLoading && patients.length === 0 && !searchTerm && (
+         <div className="text-center py-10">
+          <p className="text-muted-foreground mb-4">No hay pacientes registrados.</p>
+          <Button onClick={handleAddPatient}>
+            <Plus className="mr-2 h-4 w-4" />
+            Agregar Nuevo Paciente
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && patients.length === 0 && searchTerm && (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">No se encontraron pacientes con el término "{searchTerm}".</p>
+        </div>
+      )}
+
+
+      {!isLoading && patients.length > 0 && (
+        <PatientTable
+          patients={patients}
+          onEdit={handleEditPatient}
+          onDeleteRequest={openDeleteConfirmDialog} // Changed prop name
+          onViewDetails={handleViewDetails}
+          onExport={handleExportPatient}
         />
       )}
+
+      {/* Add Patient Dialog */}
+      <Dialog open={isAddPatientDialogOpen} onOpenChange={setIsAddPatientDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Agregar Nuevo Paciente</DialogTitle>
+            <DialogDescription>Complete el formulario para agregar un nuevo paciente.</DialogDescription>
+          </DialogHeader>
+          <PatientForm
+            onSubmitSuccess={handleFormSubmitSuccess}
+            onCancel={() => setIsAddPatientDialogOpen(false)}
+            initialData={null}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Dialog */}
+      <Dialog open={isEditPatientDialogOpen} onOpenChange={setIsEditPatientDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Editar Paciente</DialogTitle>
+            <DialogDescription>Actualice los datos del paciente.</DialogDescription>
+          </DialogHeader>
+          {selectedPatient && (
+            <PatientForm
+              onSubmitSuccess={handleFormSubmitSuccess}
+              onCancel={() => setIsEditPatientDialogOpen(false)}
+              initialData={selectedPatient}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
 
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={() => {
-          if (selectedPatient?.id) {
-            handleDeletePatient(selectedPatient.id);
-          }
-          setIsDeleteDialogOpen(false);
-        }}
+        onConfirm={handleDeleteConfirmed}
         title="Eliminar Paciente"
-        description="¿Estás seguro de que deseas eliminar este paciente? Esta acción no se puede deshacer."
+        description={`¿Estás seguro de que deseas eliminar a ${selectedPatient?.firstName} ${selectedPatient?.paternalLastName}? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
       />

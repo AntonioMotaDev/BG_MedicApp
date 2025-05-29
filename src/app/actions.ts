@@ -11,7 +11,6 @@ import { z } from 'zod'; // For ZodError instance check
 const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => {
   const data = docSnap.data();
   if (!data) {
-    // This path should ideally not be hit if docSnap.exists() is checked by the caller.
     throw new Error(`No data found for document ${docSnap.id}. Document might not exist.`);
   }
 
@@ -27,14 +26,14 @@ const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => 
         console.warn(`Invalid dateOfBirth string/number for patient ${docSnap.id}: ${data.dateOfBirth}. Will be treated as undefined.`);
       }
     } else if (data.dateOfBirth instanceof Date) {
-        processedDateOfBirth = data.dateOfBirth; // Already a JS Date
+        processedDateOfBirth = data.dateOfBirth; 
     } else {
         console.warn(`Unrecognized dateOfBirth type for patient ${docSnap.id}:`, typeof data.dateOfBirth, data.dateOfBirth, `. Will be treated as undefined.`);
     }
   }
 
   let processedPickupTimestamp: Date | undefined | null = undefined;
-  if (data.pickupTimestamp === null) { // Handle explicitly stored null
+  if (data.pickupTimestamp === null) { 
     processedPickupTimestamp = null;
   } else if (data.pickupTimestamp) {
     if (data.pickupTimestamp instanceof Timestamp) {
@@ -47,7 +46,7 @@ const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => 
         console.warn(`Invalid pickupTimestamp string/number for patient ${docSnap.id}: ${data.pickupTimestamp}. Will be treated as undefined.`);
       }
     } else if (data.pickupTimestamp instanceof Date) {
-        processedPickupTimestamp = data.pickupTimestamp; // Already a JS Date
+        processedPickupTimestamp = data.pickupTimestamp;
     } else {
         console.warn(`Unrecognized pickupTimestamp type for patient ${docSnap.id}:`, typeof data.pickupTimestamp, data.pickupTimestamp, `. Will be treated as undefined.`);
     }
@@ -79,65 +78,79 @@ const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => 
   
   const patientDataToParse = {
     id: docSnap.id,
-    fullName: data.fullName,
-    dateOfBirth: processedDateOfBirth, // Required by schema; if undefined, Zod parse will fail
-    gender: data.gender,
-    weightKg: weightKgFinal, // Optional & nullable in schema
-    heightCm: heightCmFinal,   // Optional & nullable in schema
+    paternalLastName: data.paternalLastName,
+    maternalLastName: data.maternalLastName,
+    firstName: data.firstName,
+    age: data.age, // Assuming age is stored and is a number
+    sex: data.sex || data.gender, // Prefer 'sex', fallback to 'gender' from Firestore
+    dateOfBirth: processedDateOfBirth,
+    street: data.street,
+    exteriorNumber: data.exteriorNumber,
+    interiorNumber: data.interiorNumber,
+    neighborhood: data.neighborhood,
+    city: data.city,
+    phone: data.phone,
+    insurance: data.insurance,
+    responsiblePerson: data.responsiblePerson,
+    weightKg: weightKgFinal,
+    heightCm: heightCmFinal,
     emergencyContact: data.emergencyContact,
     medicalNotes: data.medicalNotes,
-    pickupTimestamp: processedPickupTimestamp, // Optional & nullable in schema
+    pickupTimestamp: processedPickupTimestamp,
+    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
+    updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
   };
   
   try {
-    // Validate the processed data against the Zod schema
     return patientSchema.parse(patientDataToParse) as Patient;
   } catch (error) {
     console.error(`Data for patient ${docSnap.id} failed Zod validation after processing:`, error);
     console.error("Data that failed validation:", patientDataToParse);
-    // Rethrow or handle as appropriate for your app's error strategy
     throw new Error(`Processed data for patient ${docSnap.id} is invalid: ${(error as Error).message}`);
   }
 };
 
-export async function addPatient(data: z.infer<typeof patientSchema>) {
+export async function addPatient(data: PatientFormData) {
   try {
-    const validatedData = patientSchema.parse(data);
+    // PatientFormData is already validated by the form if PatientFormSchema is used.
+    // Server-side validation is still good practice.
+    const validatedData = PatientFormSchema.parse(data);
     
-    // Create a new patient object with the validated data
-    const newPatient = {
+    const patientCollection = collection(db, "patients");
+    const patientRef = await addDoc(patientCollection, {
       ...validatedData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Here you would typically save to your database
-    // For now, we'll just return success
-    return { success: true, data: newPatient };
-  } catch (error) {
-    console.error("Error adding patient:", error);
-    return { success: false, error: "Error al agregar el paciente" };
-  } finally {
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
     revalidatePath("/");
+    return { success: true, id: patientRef.id };
+  } catch (error: any) {
+    console.error("Error adding patient:", error);
+    let errorMessage = "Error al agregar el paciente.";
+    if (error instanceof z.ZodError) {
+      errorMessage = error.errors.map(e => e.message).join(", ");
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    return { success: false, error: errorMessage };
   }
 }
 
 export async function getPatients(): Promise<Patient[]> {
   try {
     const patientsCollection = collection(db, "patients");
-    const q = query(patientsCollection, orderBy("pickupTimestamp", "desc"));
+    const q = query(patientsCollection, orderBy("paternalLastName", "asc")); // Example sort
     const patientSnapshot = await getDocs(q);
-    // Use .map and .filter to handle potential errors during individual document processing
     const patientList = patientSnapshot.docs
       .map(docSnap => {
         try {
           return processPatientDoc(docSnap);
         } catch (error) {
           console.error(`Failed to process patient document ${docSnap.id}:`, error);
-          return null; // Skip this document in the final list
+          return null; 
         }
       })
-      .filter(patient => patient !== null) as Patient[]; // Type assertion after filtering out nulls
+      .filter(patient => patient !== null) as Patient[]; 
     return patientList;
   } catch (error: any) {
     console.error("Error fetching patients:", error);
@@ -145,25 +158,27 @@ export async function getPatients(): Promise<Patient[]> {
   }
 }
 
-export async function updatePatient(id: string, data: z.infer<typeof patientSchema>) {
+export async function updatePatient(id: string, data: PatientFormData) {
   try {
-    const validatedData = patientSchema.parse(data);
-    
-    // Create an updated patient object
-    const updatedPatient = {
+    const validatedData = PatientFormSchema.parse(data);
+    const patientDoc = doc(db, "patients", id);
+    await updateDoc(patientDoc, {
       ...validatedData,
-      id,
-      updatedAt: new Date(),
-    };
-
-    // Here you would typically update your database
-    // For now, we'll just return success
-    return { success: true, data: updatedPatient };
-  } catch (error) {
-    console.error("Error updating patient:", error);
-    return { success: false, error: "Error al actualizar el paciente" };
-  } finally {
+      updatedAt: serverTimestamp(),
+    });
     revalidatePath("/");
+    revalidatePath(`/patients/${id}`);
+    revalidatePath(`/patients/${id}/edit`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating patient:", error);
+    let errorMessage = "Error al actualizar el paciente.";
+    if (error instanceof z.ZodError) {
+      errorMessage = error.errors.map(e => e.message).join(", ");
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -189,8 +204,6 @@ export async function getPatientById(id: string): Promise<Patient | null> {
     const docSnap = await getDoc(patientDocRef);
 
     if (docSnap.exists()) {
-      // Attempt to process the document. If processing fails (e.g., Zod validation),
-      // it will throw an error, which will be caught by the catch block.
       return processPatientDoc(docSnap);
     } else {
       console.log(`No such patient document with ID: ${id}`);

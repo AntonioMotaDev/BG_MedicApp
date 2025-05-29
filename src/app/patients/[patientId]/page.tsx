@@ -1,54 +1,57 @@
 import { FC } from 'react';
-import type { Patient } from "@/lib/schema";
-import { Separator } from "@/components/ui/separator";
-import { getPatientById } from "@/app/actions"; // Assuming an action exists to get a single patient by ID
-import { notFound } from 'next/navigation';
+import { getPatientById } from "@/app/actions";
+import { notFound, useRouter } from 'next/navigation'; // useRouter might not be needed here if Button uses Link
+import type { Metadata, ResolvingMetadata } from 'next';
+import PatientDetailsClient from "@/components/PatientDetailsClient"; // Assuming this component exists
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 interface PatientDetailsPageProps {
   params: { patientId: string };
+}
+
+export async function generateMetadata(
+  { params }: PatientDetailsPageProps,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const patient = await getPatientById(params.patientId);
+  if (!patient) {
+    return {
+      title: "Paciente no encontrado",
+    };
+  }
+  const fullName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName || ''}`.trim();
+  return {
+    title: `Detalles de ${fullName}`,
+    description: `Información detallada del paciente ${fullName}.`,
+    // openGraph: {
+    //   images: ['/some-specific-page-image.jpg'],
+    // },
+  };
 }
 
 const PatientDetailsPage: FC<PatientDetailsPageProps> = async ({ params }) => {
   const patient = await getPatientById(params.patientId);
 
   if (!patient) {
-    notFound(); // Show a 404 page if the patient is not found
+    notFound(); 
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Detalles del Paciente</h1>
-      <div className="space-y-6 text-sm">
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Datos Personales</h3>
-          <p><strong>Nombre Completo:</strong> {patient.firstName} {patient.paternalLastName} {patient.maternalLastName}</p>
-          <p><strong>Edad:</strong> {patient.age} años</p>
-          {patient.sex && <p><strong>Sexo:</strong> {patient.sex}</p>}
-        </div>
-
-        <Separator />
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Dirección</h3>
-          <p><strong>Calle:</strong> {patient.street}</p>
-          <p><strong>Número Exterior:</strong> {patient.exteriorNumber}</p>
-          {patient.interiorNumber && <p><strong>Número Interior:</strong> {patient.interiorNumber}</p>}
-          <p><strong>Colonia:</strong> {patient.neighborhood}</p>
-          <p><strong>Ciudad:</strong> {patient.city}</p>
-        </div>
-
-        <Separator />
-
-        <div>
-          <h3 className="text-lg font-semibold mb-2">Contacto y Otros</h3>
-          <p><strong>Teléfono:</strong> {patient.phone}</p>
-          {patient.insurance && <p><strong>Derechohabiencia:</strong> {patient.insurance}</p>}
-          {patient.responsiblePerson && <p><strong>Persona Responsable:</strong> {patient.responsiblePerson}</p>}
-        </div>
-        {/* Add other patient details here as needed */}
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Detalles del Paciente</h1>
+        <Button asChild variant="outline">
+          <Link href="/" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Volver a la lista
+          </Link>
+        </Button>
       </div>
+      <PatientDetailsClient patient={patient} />
     </div>
   );
 };
 
-export default PatientDetailsPage; 
+export default PatientDetailsPage;

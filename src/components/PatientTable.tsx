@@ -11,67 +11,73 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, FileText, Eye } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, DownloadIcon } from 'lucide-react'; // Changed FileText to DownloadIcon
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface PatientTableProps {
   patients: Patient[];
   onEdit: (patient: Patient) => void;
-  onDelete: (patientId: string) => Promise<void>;
+  onDeleteRequest: (patient: Patient) => void; // Renamed from onDelete to onDeleteRequest
   onExport: (patient: Patient) => Promise<void>;
-  onViewDetails: (patient: Patient) => Promise<void>;
+  onViewDetails: (patient: Patient) => void; // Kept as is, navigation handled in parent
 }
 
 const PatientTable: FC<PatientTableProps> = ({
   patients,
   onEdit,
-  onDelete,
+  onDeleteRequest,
   onExport,
   onViewDetails,
 }) => {
-  const router = useRouter();
 
-  const handleViewDetails = (patient: Patient) => {
-    if (patient.id) {
-      router.push(`/patients/${patient.id}`);
+  const getDisplayAge = (patient: Patient): string => {
+    if (patient.age !== undefined && patient.age !== null) return `${patient.age} años`;
+    if (patient.dateOfBirth) {
+      const birthDate = new Date(patient.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return `${age} años`;
     }
+    return 'N/A';
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>#</TableHead>
-            <TableHead>Nombre Completo</TableHead>
+            <TableHead className="whitespace-nowrap">Nombre Completo</TableHead>
             <TableHead>Edad</TableHead>
-            <TableHead>Dirección</TableHead>
-            <TableHead>Teléfono</TableHead>
-            <TableHead>Derechohabiencia</TableHead>
+            <TableHead className="hidden sm:table-cell">Sexo</TableHead>
+            <TableHead className="hidden md:table-cell">Teléfono</TableHead>
+            <TableHead className="hidden lg:table-cell whitespace-nowrap">Fecha de Nacimiento</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {patients.map((patient, index) => (
+          {patients.map((patient) => (
             <TableRow key={patient.id}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>
-                {patient.firstName} {patient.paternalLastName} {patient.maternalLastName}
+              <TableCell className="font-medium whitespace-nowrap">
+                {patient.firstName} {patient.paternalLastName} {patient.maternalLastName || ''}
               </TableCell>
-              <TableCell>{patient.age} años</TableCell>
-              <TableCell>
-                {patient.street} {patient.exteriorNumber}
-                {patient.interiorNumber ? ` Int. ${patient.interiorNumber}` : ''}
-                {', '}{patient.neighborhood}, {patient.city}
+              <TableCell>{getDisplayAge(patient)}</TableCell>
+              <TableCell className="hidden sm:table-cell">{patient.sex}</TableCell>
+              <TableCell className="hidden md:table-cell">{patient.phone}</TableCell>
+              <TableCell className="hidden lg:table-cell whitespace-nowrap">
+                {patient.dateOfBirth ? format(new Date(patient.dateOfBirth), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
               </TableCell>
-              <TableCell>{patient.phone}</TableCell>
-              <TableCell>{patient.insurance || '-'}</TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -81,17 +87,18 @@ const PatientTable: FC<PatientTableProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleViewDetails(patient)}>
+                    <DropdownMenuItem onClick={() => onViewDetails(patient)}>
                       <Eye className="mr-2 h-4 w-4" /> Ver Detalles
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onExport(patient)}>
-                      <FileText className="mr-2 h-4 w-4" /> Exportar
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(patient)}>
                       <Edit className="mr-2 h-4 w-4" /> Editar
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onExport(patient)}>
+                      <DownloadIcon className="mr-2 h-4 w-4" /> Exportar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      onClick={() => onDelete(patient.id!)}
+                      onClick={() => onDeleteRequest(patient)} // Use onDeleteRequest
                       className="text-destructive focus:text-destructive focus:bg-destructive/10"
                     >
                       <Trash2 className="mr-2 h-4 w-4" /> Eliminar
