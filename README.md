@@ -1,5 +1,19 @@
-# Firebase Studio
+# BG MedicApp - Sistema de Gestión Prehospitalaria
 
-This is a NextJS starter in Firebase Studio.
+Sistema de gestión para administrar pacientes y registros prehospitalarios. Desarrollado con Next.js y Firebase.
 
-To get started, take a look at src/app/page.tsx.
+## Características Principales
+
+- Gestión completa de pacientes
+- Registro de historiales prehospitalarios
+- Generación de reportes
+- Interfaz intuitiva y responsive
+
+## Tecnologías
+
+- Next.js 14
+- Firebase
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+
