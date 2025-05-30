@@ -126,27 +126,26 @@ const Home: FC = () => {
 
   const handleExportPatient = async (patient: Patient) => {
     try {
-      const fullName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName || ''}`.trim();
       const patientDataToExport = {
         id: patient.id,
-        fullName: fullName,
-        dateOfBirth: patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "yyyy-MM-dd") : undefined,
+        firstName: patient.firstName,
+        paternalLastName: patient.paternalLastName,
+        maternalLastName: patient.maternalLastName, 
         sex: patient.sex,
         phone: patient.phone,
         emergencyContact: patient.emergencyContact,
-        weightKg: patient.weightKg,
-        heightCm: patient.heightCm,
-        medicalNotes: patient.medicalNotes,
-        // street: patient.street, // Example: if you want to add more fields
-        // exteriorNumber: patient.exteriorNumber,
-        // neighborhood: patient.neighborhood,
-        // city: patient.city,
-        // insurance: patient.insurance,
+        street: patient.street,
+        exteriorNumber: patient.exteriorNumber,
+        interiorNumber: patient.interiorNumber,
+        neighborhood: patient.neighborhood,
+        city: patient.city,
+        insurance: patient.insurance,
+        responsiblePerson: patient.responsiblePerson,
       };
       
       const blob = new Blob([JSON.stringify(patientDataToExport, null, 2)], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement('a');  
       a.href = url;
       a.download = `patient-${patient.id}.json`;
       document.body.appendChild(a);
@@ -167,10 +166,10 @@ const Home: FC = () => {
     }
   };
   
-  const handleFormSubmitSuccess = () => {
+  const handleFormSubmitSuccess = async () => {
     setIsAddPatientDialogOpen(false);
     setIsEditPatientDialogOpen(false);
-    loadPatients(); // Refresh the list
+    await loadPatients(); // Asegurarse de que se recarguen los pacientes
   };
 
 

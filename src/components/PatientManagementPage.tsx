@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Patient } from "@/lib/schema";
 import PatientTable from "@/components/PatientTable";
 import PatientForm from "@/components/PatientForm";
@@ -23,6 +24,7 @@ interface PatientManagementPageProps {
 }
 
 export default function PatientManagementPage({ initialPatients }: PatientManagementPageProps) {
+  const router = useRouter();
   const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>(undefined);
@@ -45,7 +47,12 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
         title: "Patient Deleted",
         description: "Patient record deleted successfully.",
       });
-      // Relies on revalidatePath from server action updating initialPatients prop from parent.
+      // Refresh the patients list
+      const response = await fetch('/api/patients');
+      if (response.ok) {
+        const updatedPatients = await response.json();
+        setPatients(updatedPatients);
+      }
     } else {
       toast({
         title: "Error Deleting Patient",
@@ -59,6 +66,17 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
     setIsEditFormOpen(false);
     setEditingPatient(undefined);
     // Relies on revalidatePath from server action.
+    router.refresh();
+  };
+
+  const handleFormSubmitSuccess = async () => {
+    // Refresh the patients list
+    const response = await fetch('/api/patients');
+    if (response.ok) {
+      const updatedPatients = await response.json();
+      setPatients(updatedPatients);
+    }
+    closeEditForm();
   };
 
   return (
@@ -68,21 +86,25 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
       <PatientTable
         patients={patients}
         onEdit={handleEditPatient}
-        onDelete={async (patientId) => {
-          const patientToDelete = patients.find(p => p.id === patientId);
-          if (patientToDelete) {
-            const confirmDeleteTrigger = document.getElementById(`delete-confirm-trigger-${patientId}`);
-            if (confirmDeleteTrigger) {
-              confirmDeleteTrigger.click();
-            } else {
-               if (window.confirm(`Are you sure you want to delete patient ${patientToDelete.firstName} ${patientToDelete.paternalLastName}?`)) {
-                 handleDeletePatient(patientId);
-               }
+        onDeleteRequest={async (patient: Patient) => {
+          if (!patient.id) return;
+          const confirmDeleteTrigger = document.getElementById(`delete-confirm-trigger-${patient.id}`);
+          if (confirmDeleteTrigger) {
+            confirmDeleteTrigger.click();
+          } else {
+            if (window.confirm(`Are you sure you want to delete patient ${patient.firstName} ${patient.paternalLastName}?`)) {
+              handleDeletePatient(patient.id);
             }
           }
         }}
-        onExport={async () => {}}
-        // onViewDetails prop is no longer used for dialog, navigation is handled in PatientTable
+        onExport={async (patient: Patient) => {
+          // TODO: Implement export functionality
+          console.log('Export patient:', patient);
+        }}
+        onViewDetails={(patient: Patient) => {
+          if (!patient.id) return;
+          router.push(`/patients/${patient.id}`);
+        }}
       />
 
       {/* Edit Patient Dialog */}
@@ -99,11 +121,8 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
           </DialogHeader>
           <PatientForm 
             initialData={editingPatient} 
-            onClose={closeEditForm} 
-            onSubmit={async (data) => {
-              // Handle form submission - this will likely involve an updatePatient action
-              closeEditForm();
-            }}
+            onCancel={closeEditForm} 
+            onSubmitSuccess={handleFormSubmitSuccess}
           />
         </DialogContent>
       </Dialog>

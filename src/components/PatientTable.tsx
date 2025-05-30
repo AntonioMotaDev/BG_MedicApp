@@ -19,8 +19,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface PatientTableProps {
   patients: Patient[];
@@ -40,16 +38,7 @@ const PatientTable: FC<PatientTableProps> = ({
 
   const getDisplayAge = (patient: Patient): string => {
     if (patient.age !== undefined && patient.age !== null) return `${patient.age} años`;
-    if (patient.dateOfBirth) {
-      const birthDate = new Date(patient.dateOfBirth);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return `${age} años`;
-    }
+    
     return 'N/A';
   };
 
@@ -60,9 +49,7 @@ const PatientTable: FC<PatientTableProps> = ({
           <TableRow>
             <TableHead className="whitespace-nowrap">Nombre Completo</TableHead>
             <TableHead>Edad</TableHead>
-            <TableHead className="hidden sm:table-cell">Sexo</TableHead>
             <TableHead className="hidden md:table-cell">Teléfono</TableHead>
-            <TableHead className="hidden lg:table-cell whitespace-nowrap">Fecha de Nacimiento</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -73,11 +60,7 @@ const PatientTable: FC<PatientTableProps> = ({
                 {patient.firstName} {patient.paternalLastName} {patient.maternalLastName || ''}
               </TableCell>
               <TableCell>{getDisplayAge(patient)}</TableCell>
-              <TableCell className="hidden sm:table-cell">{patient.sex}</TableCell>
               <TableCell className="hidden md:table-cell">{patient.phone}</TableCell>
-              <TableCell className="hidden lg:table-cell whitespace-nowrap">
-                {patient.dateOfBirth ? format(new Date(patient.dateOfBirth), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
-              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

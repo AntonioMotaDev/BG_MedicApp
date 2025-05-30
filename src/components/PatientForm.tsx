@@ -1,4 +1,3 @@
-
 "use client";
 
 import { FC, useEffect } from 'react';
@@ -22,13 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast"; // Changed import
 import { addPatient, updatePatient } from "@/app/actions";
 import type { Patient } from "@/lib/schema";
@@ -45,17 +37,12 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
     resolver: zodResolver(PatientFormSchema),
     defaultValues: initialData ? {
       ...PatientFormSchema.partial().parse(initialData),
-      dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
-      pickupTimestamp: initialData.pickupTimestamp ? new Date(initialData.pickupTimestamp) : null,
-      weightKg: initialData.weightKg === undefined || initialData.weightKg === null ? null : initialData.weightKg,
-      heightCm: initialData.heightCm === undefined || initialData.heightCm === null ? null : initialData.heightCm,
     } : {
       paternalLastName: "",
       maternalLastName: "",
       firstName: "",
       age: undefined,
       sex: "Sin definir",
-      dateOfBirth: undefined,
       street: "",
       exteriorNumber: "",
       interiorNumber: "",
@@ -64,11 +51,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
       phone: "",
       insurance: "",
       responsiblePerson: "",
-      weightKg: null,
-      heightCm: null,
-      emergencyContact: "",
-      medicalNotes: "",
-      pickupTimestamp: null,
     },
   });
 
@@ -77,10 +59,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
       const formData = PatientFormSchema.partial().parse(initialData);
       form.reset({
         ...formData,
-        dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
-        pickupTimestamp: initialData.pickupTimestamp ? new Date(initialData.pickupTimestamp) : null,
-        weightKg: initialData.weightKg === undefined || initialData.weightKg === null ? null : initialData.weightKg,
-        heightCm: initialData.heightCm === undefined || initialData.heightCm === null ? null : initialData.heightCm,
       });
     } else {
        form.reset({
@@ -89,7 +67,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
         firstName: "",
         age: undefined,
         sex: "Sin definir",
-        dateOfBirth: undefined,
         street: "",
         exteriorNumber: "",
         interiorNumber: "",
@@ -98,11 +75,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
         phone: "",
         insurance: "",
         responsiblePerson: "",
-        weightKg: null,
-        heightCm: null,
-        emergencyContact: "",
-        medicalNotes: "",
-        pickupTimestamp: null,
       });
     }
   }, [initialData, form]);
@@ -188,52 +160,10 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="dateOfBirth"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Fecha de Nacimiento</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP", { locale: es })
-                        ) : (
-                          <span>Seleccione una fecha</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                      locale={es}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
             name="age"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Edad (opcional)</FormLabel>
+                <FormLabel>Edad</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -247,33 +177,33 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               </FormItem>
             )}
           />
+
+          <FormField
+            control={form.control}
+            name="sex"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sexo</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione el sexo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Masculino">Masculino</SelectItem>
+                        <SelectItem value="Femenino">Femenino</SelectItem>
+                        <SelectItem value="Sin definir">Sin definir</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
 
-        <FormField
-          control={form.control}
-          name="sex"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Sexo</FormLabel>
-                <FormControl>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el sexo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Masculino">Masculino</SelectItem>
-                      <SelectItem value="Femenino">Femenino</SelectItem>
-                      <SelectItem value="Sin definir">Sin definir</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <div className="space-y-2">
-          <FormLabel>Dirección</FormLabel>
+          <FormLabel>Dirección:</FormLabel>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -357,62 +287,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="emergencyContact"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contacto de Emergencia (opcional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Nombre y teléfono" {...field} value={field.value ?? ""} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="weightKg"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Peso (kg) (opcional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Ej. 70.5" 
-                    {...field} 
-                    value={field.value === null || field.value === undefined ? "" : String(field.value)}
-                    onChange={(e) => field.onChange(e.target.value === '' ? null : parseFloat(e.target.value))}
-                    step="0.1"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="heightCm"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Altura (cm) (opcional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Ej. 175" 
-                    {...field} 
-                    value={field.value === null || field.value === undefined ? "" : String(field.value)}
-                    onChange={(e) => field.onChange(e.target.value === '' ? null : parseInt(e.target.value, 10))}
-                    step="1"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
         
         <FormField
@@ -441,85 +315,6 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="medicalNotes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notas Médicas (opcional)</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Alergias, condiciones preexistentes, etc." {...field} value={field.value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-            control={form.control}
-            name="pickupTimestamp"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Fecha y Hora de Recogida (opcional)</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP p", { locale: es })
-                        ) : (
-                          <span>Seleccione fecha y hora</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                       onSelect={(date) => {
-                        if (!date) {
-                          field.onChange(null); 
-                          return;
-                        }
-                        const currentTime = field.value || new Date();
-                        const newDate = new Date(date);
-                        newDate.setHours(currentTime.getHours());
-                        newDate.setMinutes(currentTime.getMinutes());
-                        newDate.setSeconds(currentTime.getSeconds());
-                        field.onChange(newDate);
-                      }}
-                      initialFocus
-                      locale={es}
-                    />
-                    {field.value && (
-                       <div className="p-2 border-t">
-                        <Input
-                          type="time"
-                          value={format(field.value, "HH:mm")}
-                          onChange={(e) => {
-                            const newTime = e.target.value.split(':');
-                            const newDate = new Date(field.value!);
-                            newDate.setHours(parseInt(newTime[0],10));
-                            newDate.setMinutes(parseInt(newTime[1],10));
-                            field.onChange(newDate);
-                          }}
-                        />
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>

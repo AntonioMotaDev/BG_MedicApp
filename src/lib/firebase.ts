@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
-// import { getAuth } from "firebase/auth"; // If auth is needed
+import { getAuth } from "firebase/auth"; // If auth is needed
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -11,6 +11,9 @@ const firebaseConfig = {
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
+
+// const app = initializeApp(firebaseConfig);
+
 
 // Check for missing project ID, which is crucial for Firestore.
 if (!firebaseConfig.projectId) {
@@ -30,6 +33,6 @@ if (!getApps().length) {
 }
 
 const db: Firestore = getFirestore(app);
-// const auth = getAuth(app); // If auth is needed
+const auth = getAuth(app); // If auth is needed
 
-export { app, db };
+export { app, db, auth };

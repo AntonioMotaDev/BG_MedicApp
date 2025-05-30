@@ -9,7 +9,6 @@ export const patientSchema = z.object({
   sex: z.enum(["Masculino", "Femenino", "Sin definir"], {
     required_error: "El sexo es requerido",
   }),
-  dateOfBirth: z.coerce.date().optional(),
   street: z.string().min(1, "La calle es requerida"),
   exteriorNumber: z.string().min(1, "El número exterior es requerido"),
   interiorNumber: z.string().optional(),
@@ -18,21 +17,13 @@ export const patientSchema = z.object({
   phone: z.string().min(1, "El teléfono es requerido"),
   insurance: z.string().optional(),
   responsiblePerson: z.string().min(1, "La persona responsable es requerida"),
-  weightKg: z.coerce.number().optional().nullable(),
-  heightCm: z.coerce.number().optional().nullable(),
   emergencyContact: z.string().optional(),
-  medicalNotes: z.string().optional(),
-  pickupTimestamp: z.coerce.date().optional().nullable(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
 });
 
 export type Patient = z.infer<typeof patientSchema>;
 
 export const PatientFormSchema = patientSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
+  id: true
 });
 export type PatientFormData = z.infer<typeof PatientFormSchema>;
 

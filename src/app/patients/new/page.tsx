@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from 'lucide-react';
 import PatientForm from '@/components/PatientForm';
 import { useToast } from "@/hooks/use-toast";
-import type { PatientFormData } from '@/lib/schema';
-import { patientService } from '@/lib/services/patientService';
 
 const NewPatientPage: FC = () => {
   const router = useRouter();
@@ -29,10 +27,9 @@ const NewPatientPage: FC = () => {
 
       <div className="max-w-2xl mx-auto">
         <PatientForm
-          onClose={() => router.back()}
-          onSubmit={async (data: PatientFormData) => {
+          onCancel={() => router.back()}
+          onSubmitSuccess={async () => {
             try {
-              await patientService.createPatient(data);
               toast({
                 title: "Paciente Agregado",
                 description: "Registro del paciente creado exitosamente.",
