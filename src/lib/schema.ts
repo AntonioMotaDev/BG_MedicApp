@@ -6,6 +6,7 @@ export const patientSchema = z.object({
   maternalLastName: z.string().min(1, "El apellido materno es requerido"),
   firstName: z.string().min(1, "El nombre es requerido"),
   age: z.number().min(0, "La edad debe ser un número positivo").optional(), // Made optional as dateOfBirth is primary
+  dateOfBirth: z.date().optional(),
   sex: z.enum(["Masculino", "Femenino", "Sin definir"], {
     required_error: "El sexo es requerido",
   }),
@@ -18,12 +19,17 @@ export const patientSchema = z.object({
   insurance: z.string().optional(),
   responsiblePerson: z.string().min(1, "La persona responsable es requerida"),
   emergencyContact: z.string().optional(),
+  pickupTimestamp: z.date().nullable().optional(),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
 });
 
 export type Patient = z.infer<typeof patientSchema>;
 
 export const PatientFormSchema = patientSchema.omit({
-  id: true
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 export type PatientFormData = z.infer<typeof PatientFormSchema>;
 
@@ -33,3 +39,32 @@ export const LoginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 export type LoginFormData = z.infer<typeof LoginSchema>;
+
+// User Role Schema
+export const UserRoleSchema = z.enum(['user', 'admin']);
+export type UserRole = z.infer<typeof UserRoleSchema>;
+
+// User Schema
+export const UserSchema = z.object({
+  id: z.string(),
+  email: z.string().email(),
+  name: z.string().min(1, "Name is required"),
+  role: UserRoleSchema,
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export type User = z.infer<typeof UserSchema>;
+
+// Register Schema
+export const RegisterSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
+  confirmPassword: z.string().min(6, "Password confirmation is required"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+export type RegisterFormData = z.infer<typeof RegisterSchema>;

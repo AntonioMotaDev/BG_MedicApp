@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -596,7 +595,7 @@ const SidebarMenuButton = React.forwardRef<
         // If asChild is true for SidebarMenuButton, Link also uses asChild
         // and Slot receives the styling and event handlers.
         buttonElementNode = (
-          <Link {...linkComponentProps} asChild legacyBehavior passHref>
+          <Link {...linkComponentProps} legacyBehavior passHref>
             <Slot {...linkElementProps} >{children}</Slot>
           </Link>
         );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Patient } from "@/lib/schema";
 import PatientTable from "@/components/PatientTable";
@@ -13,27 +13,29 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { deletePatient } from "@/app/actions";
+import { usePatients } from "@/hooks/usePatients";
+import NetworkStatusBanner from "./NetworkStatusBanner";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, AlertTriangle } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-
-interface PatientManagementPageProps {
-  initialPatients: Patient[];
-}
-
-export default function PatientManagementPage({ initialPatients }: PatientManagementPageProps) {
+export default function PatientManagementPage() {
   const router = useRouter();
-  const [patients, setPatients] = useState<Patient[]>(initialPatients);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | undefined>(undefined);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setPatients(initialPatients);
-  }, [initialPatients]);
-
+  const {
+    patients,
+    isLoading,
+    error,
+    isOnline,
+    wasOffline,
+    syncStatus,
+    updatePatient,
+    deletePatient: deletePatientOffline,
+    forceSync,
+  } = usePatients();
 
   const handleEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
@@ -41,22 +43,18 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
   };
 
   const handleDeletePatient = async (patientId: string) => {
-    const result = await deletePatient(patientId);
+    const result = await deletePatientOffline(patientId);
     if (result.success) {
       toast({
-        title: "Patient Deleted",
-        description: "Patient record deleted successfully.",
+        title: "Paciente Eliminado",
+        description: isOnline 
+          ? "El registro del paciente ha sido eliminado exitosamente."
+          : "El registro del paciente ha sido eliminado localmente y se sincronizará cuando haya conexión.",
       });
-      // Refresh the patients list
-      const response = await fetch('/api/patients');
-      if (response.ok) {
-        const updatedPatients = await response.json();
-        setPatients(updatedPatients);
-      }
     } else {
       toast({
-        title: "Error Deleting Patient",
-        description: result.error || "Failed to delete patient record.",
+        title: "Error al Eliminar",
+        description: result.error || "No se pudo eliminar el registro del paciente.",
         variant: "destructive",
       });
     }
@@ -65,26 +63,50 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
   const closeEditForm = () => {
     setIsEditFormOpen(false);
     setEditingPatient(undefined);
-    // Relies on revalidatePath from server action.
-    router.refresh();
   };
 
   const handleFormSubmitSuccess = async () => {
-    // Refresh the patients list
-    const response = await fetch('/api/patients');
-    if (response.ok) {
-      const updatedPatients = await response.json();
-      setPatients(updatedPatients);
-    }
     closeEditForm();
+    toast({
+      title: "Paciente Actualizado",
+      description: isOnline 
+        ? "Los datos del paciente han sido actualizados exitosamente."
+        : "Los cambios han sido guardados localmente y se sincronizarán cuando haya conexión.",
+    });
   };
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <NetworkStatusBanner
+          isOnline={isOnline}
+          wasOffline={wasOffline}
+          syncStatus={syncStatus}
+          onForceSync={forceSync}
+        />
+        <div className="text-center py-8">
+          <p className="text-destructive">Error al cargar pacientes: {error}</p>
+          <Button onClick={forceSync} className="mt-4">
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Add Patient button and overall title are now in DashboardPageContent.tsx */}
+      {/* Network Status Banner */}
+      <NetworkStatusBanner
+        isOnline={isOnline}
+        wasOffline={wasOffline}
+        syncStatus={syncStatus}
+        onForceSync={forceSync}
+      />
       
       <PatientTable
         patients={patients}
+        isLoading={isLoading}
         onEdit={handleEditPatient}
         onDeleteRequest={async (patient: Patient) => {
           if (!patient.id) return;
@@ -92,7 +114,7 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
           if (confirmDeleteTrigger) {
             confirmDeleteTrigger.click();
           } else {
-            if (window.confirm(`Are you sure you want to delete patient ${patient.firstName} ${patient.paternalLastName}?`)) {
+            if (window.confirm(`¿Está seguro de que desea eliminar al paciente ${patient.firstName} ${patient.paternalLastName}?`)) {
               handleDeletePatient(patient.id);
             }
           }
@@ -114,9 +136,9 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
       }}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Patient Record</DialogTitle>
+            <DialogTitle>Editar Registro de Paciente</DialogTitle>
             <DialogDescription>
-              Update the patient's details below.
+              Actualice los datos del paciente a continuación.
             </DialogDescription>
           </DialogHeader>
           <PatientForm 
@@ -130,23 +152,23 @@ export default function PatientManagementPage({ initialPatients }: PatientManage
       {/* Delete Confirmation Dialogs */}
       {patients.map(p => p.id && (
          <AlertDialog key={`alert-${p.id}`}>
-            <AlertDialogTrigger id={`delete-confirm-trigger-${p.id}`} className="hidden">Delete</AlertDialogTrigger>
+            <AlertDialogTrigger id={`delete-confirm-trigger-${p.id}`} className="hidden">Eliminar</AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  <AlertTriangle className="inline-block mr-2 text-destructive" /> Are you absolutely sure?
+                  <AlertTriangle className="inline-block mr-2 text-destructive" /> ¿Está absolutamente seguro?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the patient record for {p.firstName} {p.paternalLastName}.
+                  Esta acción no se puede deshacer. Esto eliminará permanentemente el registro del paciente {p.firstName} {p.paternalLastName}.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleDeletePatient(p.id!)}
                   className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                 >
-                  Yes, delete patient
+                  Sí, eliminar paciente
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

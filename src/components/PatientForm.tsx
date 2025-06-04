@@ -21,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast"; // Changed import
-import { addPatient, updatePatient } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
+import { usePatients } from "@/hooks/usePatients";
 import type { Patient } from "@/lib/schema";
 
 interface PatientFormProps {
@@ -32,11 +32,26 @@ interface PatientFormProps {
 }
 
 const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialData }) => {
-  const { toast } = useToast(); // Get toast from custom hook
+  const { toast } = useToast();
+  const { createPatient, updatePatient: updatePatientOffline, isOnline } = usePatients();
+  
   const form = useForm<PatientFormData>({
     resolver: zodResolver(PatientFormSchema),
     defaultValues: initialData ? {
-      ...PatientFormSchema.partial().parse(initialData),
+      paternalLastName: initialData.paternalLastName || "",
+      maternalLastName: initialData.maternalLastName || "",
+      firstName: initialData.firstName || "",
+      age: initialData.age,
+      sex: initialData.sex || "Sin definir",
+      street: initialData.street || "",
+      exteriorNumber: initialData.exteriorNumber || "",
+      interiorNumber: initialData.interiorNumber || "",
+      neighborhood: initialData.neighborhood || "",
+      city: initialData.city || "",
+      phone: initialData.phone || "",
+      insurance: initialData.insurance || "",
+      responsiblePerson: initialData.responsiblePerson || "",
+      emergencyContact: initialData.emergencyContact || "",
     } : {
       paternalLastName: "",
       maternalLastName: "",
@@ -51,14 +66,27 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
       phone: "",
       insurance: "",
       responsiblePerson: "",
+      emergencyContact: "",
     },
   });
 
  useEffect(() => {
     if (initialData) {
-      const formData = PatientFormSchema.partial().parse(initialData);
       form.reset({
-        ...formData,
+        paternalLastName: initialData.paternalLastName || "",
+        maternalLastName: initialData.maternalLastName || "",
+        firstName: initialData.firstName || "",
+        age: initialData.age,
+        sex: initialData.sex || "Sin definir",
+        street: initialData.street || "",
+        exteriorNumber: initialData.exteriorNumber || "",
+        interiorNumber: initialData.interiorNumber || "",
+        neighborhood: initialData.neighborhood || "",
+        city: initialData.city || "",
+        phone: initialData.phone || "",
+        insurance: initialData.insurance || "",
+        responsiblePerson: initialData.responsiblePerson || "",
+        emergencyContact: initialData.emergencyContact || "",
       });
     } else {
        form.reset({
@@ -75,6 +103,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
         phone: "",
         insurance: "",
         responsiblePerson: "",
+        emergencyContact: "",
       });
     }
   }, [initialData, form]);
@@ -84,26 +113,28 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
     try {
       let result;
       if (initialData?.id) {
-        result = await updatePatient(initialData.id, data);
+        result = await updatePatientOffline(initialData.id, data);
       } else {
-        result = await addPatient(data);
+        result = await createPatient(data);
       }
 
       if (result.success) {
-        toast({ // Adjusted toast call
+        toast({
           title: "Éxito",
-          description: initialData?.id ? "Paciente actualizado exitosamente" : "Paciente agregado exitosamente",
+          description: initialData?.id 
+            ? (isOnline ? "Paciente actualizado exitosamente" : "Cambios guardados localmente - se sincronizarán cuando haya conexión")
+            : (isOnline ? "Paciente agregado exitosamente" : "Paciente guardado localmente - se sincronizará cuando haya conexión"),
         });
         onSubmitSuccess();
       } else {
-        toast({ // Adjusted toast call
+        toast({
           title: "Error",
           description: result.error || "Ocurrió un error",
           variant: "destructive",
         });
       }
     } catch (error) {
-      toast({ // Adjusted toast call
+      toast({
         title: "Error",
         description: "Error al guardar el paciente",
         variant: "destructive",
@@ -123,7 +154,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               <FormItem>
                 <FormLabel>Apellido Paterno</FormLabel>
                 <FormControl>
-                  <Input placeholder="Apellido paterno" {...field} />
+                  <Input placeholder="Apellido paterno" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -136,7 +167,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               <FormItem>
                 <FormLabel>Apellido Materno</FormLabel>
                 <FormControl>
-                  <Input placeholder="Apellido materno" {...field} />
+                  <Input placeholder="Apellido materno" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -149,7 +180,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               <FormItem>
                 <FormLabel>Nombre(s)</FormLabel>
                 <FormControl>
-                  <Input placeholder="Nombre(s)" {...field} />
+                  <Input placeholder="Nombre(s)" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -168,9 +199,11 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
                   <Input
                     type="number"
                     placeholder="Edad"
-                    {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+                    value={field.value !== undefined ? field.value.toString() : ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === '' ? undefined : Number(value));
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
@@ -212,7 +245,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
                 <FormItem>
                   <FormLabel className="text-xs">Calle</FormLabel>
                   <FormControl>
-                    <Input placeholder="Calle" {...field} />
+                    <Input placeholder="Calle" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -225,20 +258,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
                 <FormItem>
                   <FormLabel className="text-xs">Número Exterior</FormLabel>
                   <FormControl>
-                    <Input placeholder="Número exterior" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="interiorNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs">Número Interior (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Número interior" {...field} value={field.value ?? ""} />
+                    <Input placeholder="Número exterior" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -251,7 +271,20 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
                 <FormItem>
                   <FormLabel className="text-xs">Colonia</FormLabel>
                   <FormControl>
-                    <Input placeholder="Colonia" {...field} />
+                    <Input placeholder="Colonia" {...field} value={field.value || ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="interiorNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs">Número Interior (opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Número interior" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -264,12 +297,13 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
                 <FormItem className="md:col-span-2">
                   <FormLabel className="text-xs">Ciudad/Municipio</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ciudad o municipio" {...field} />
+                    <Input placeholder="Ciudad o municipio" {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            
           </div>
         </div>
         
@@ -281,7 +315,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
               <FormItem>
                 <FormLabel>Teléfono</FormLabel>
                 <FormControl>
-                  <Input placeholder="Ej. 4441234567" {...field} />
+                  <Input placeholder="Ej. 4441234567" {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -296,7 +330,7 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
             <FormItem>
               <FormLabel>Seguro / Derechohabiencia (opcional)</FormLabel>
               <FormControl>
-                <Input placeholder="IMSS, ISSSTE, GNP, etc." {...field} value={field.value ?? ""} />
+                <Input placeholder="IMSS, ISSSTE, GNP, etc." {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -309,7 +343,20 @@ const PatientForm: FC<PatientFormProps> = ({ onSubmitSuccess, onCancel, initialD
             <FormItem>
               <FormLabel>Persona Responsable</FormLabel>
               <FormControl>
-                <Input placeholder="Padre, Madre, Tutor, etc." {...field} />
+                <Input placeholder="Padre, Madre, Tutor, etc." {...field} value={field.value || ""} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="emergencyContact"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contacto de Emergencia (Opcional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Contacto de emergencia" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

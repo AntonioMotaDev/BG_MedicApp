@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Eye, DownloadIcon } from 'lucide-react'; // Changed FileText to DownloadIcon
+import { MoreHorizontal, Edit, Trash2, Eye, DownloadIcon, Loader2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,14 +22,16 @@ import {
 
 interface PatientTableProps {
   patients: Patient[];
+  isLoading?: boolean;
   onEdit: (patient: Patient) => void;
-  onDeleteRequest: (patient: Patient) => void; // Renamed from onDelete to onDeleteRequest
+  onDeleteRequest: (patient: Patient) => void;
   onExport: (patient: Patient) => Promise<void>;
-  onViewDetails: (patient: Patient) => void; // Kept as is, navigation handled in parent
+  onViewDetails: (patient: Patient) => void;
 }
 
 const PatientTable: FC<PatientTableProps> = ({
   patients,
+  isLoading = false,
   onEdit,
   onDeleteRequest,
   onExport,
@@ -54,43 +56,60 @@ const PatientTable: FC<PatientTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {patients.map((patient) => (
-            <TableRow key={patient.id}>
-              <TableCell className="font-medium whitespace-nowrap">
-                {patient.firstName} {patient.paternalLastName} {patient.maternalLastName || ''}
-              </TableCell>
-              <TableCell>{getDisplayAge(patient)}</TableCell>
-              <TableCell className="hidden md:table-cell">{patient.phone}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Abrir menú</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onViewDetails(patient)}>
-                      <Eye className="mr-2 h-4 w-4" /> Ver Detalles
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(patient)}>
-                      <Edit className="mr-2 h-4 w-4" /> Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onExport(patient)}>
-                      <DownloadIcon className="mr-2 h-4 w-4" /> Exportar
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => onDeleteRequest(patient)} // Use onDeleteRequest
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cargando pacientes...
+                </div>
               </TableCell>
             </TableRow>
-          ))}
+          ) : patients.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                No hay pacientes registrados
+              </TableCell>
+            </TableRow>
+          ) : (
+            patients.map((patient) => (
+              <TableRow key={patient.id}>
+                <TableCell className="font-medium whitespace-nowrap">
+                  {patient.firstName} {patient.paternalLastName} {patient.maternalLastName || ''}
+                </TableCell>
+                <TableCell>{getDisplayAge(patient)}</TableCell>
+                <TableCell className="hidden md:table-cell">{patient.phone}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Abrir menú</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onViewDetails(patient)}>
+                        <Eye className="mr-2 h-4 w-4" /> Ver Detalles
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEdit(patient)}>
+                        <Edit className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onExport(patient)}>
+                        <DownloadIcon className="mr-2 h-4 w-4" /> Exportar
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => onDeleteRequest(patient)}
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

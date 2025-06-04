@@ -66,48 +66,11 @@ const ProfilePage: NextPage = () => {
     }
   };
 
-  if (!isClient || !isAuthCheckComplete) {
-    return (
-      <div className="flex flex-col flex-1">
-        <Header />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </main>
-        <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-          © {new Date().getFullYear()} BG MedicApp. All rights reserved. (For demo purposes only)
-        </footer>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-     return (
-      <div className="flex flex-col flex-1">
-        <Header />
-        <main className="flex-grow flex items-center justify-center p-4">
-          <p>Redirecting to login...</p>
-          <Loader2 className="ml-2 h-8 w-8 animate-spin text-primary" />
-        </main>
-        <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-          © {new Date().getFullYear()} BG MedicApp. All rights reserved. (For demo purposes only)
-        </footer>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col flex-1">
-      <Header />
       <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center">
         <div className="w-full max-w-2xl">
-            <div className="mb-6 flex justify-start">
-                <Link href="/main-menu" passHref legacyBehavior>
-                <Button variant="outline">
-                    <ArrowLeftCircle className="mr-2 h-5 w-5" />
-                    Back to Main Menu
-                </Button>
-                </Link>
-            </div>
+           
             <Card className="shadow-lg rounded-lg">
                 <CardHeader className="text-center">
                 <div className="mx-auto bg-primary text-primary-foreground rounded-full h-16 w-16 flex items-center justify-center mb-4">
@@ -166,9 +129,6 @@ const ProfilePage: NextPage = () => {
             </Card>
         </div>
       </main>
-      <footer className="text-center p-4 text-muted-foreground text-sm border-t">
-        © {new Date().getFullYear()} BG MedicApp. All rights reserved. (For demo purposes only)
-      </footer>
     </div>
   );
 };

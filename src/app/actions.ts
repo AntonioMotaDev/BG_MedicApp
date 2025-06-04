@@ -7,6 +7,9 @@ import { PatientFormSchema, patientSchema } from "@/lib/schema";
 import { revalidatePath } from "next/cache";
 import { z } from 'zod'; // For ZodError instance check
 
+// Import sync service for offline capabilities
+// Note: Server actions will use Firebase directly, client components will use syncService
+
 // Helper to convert Firestore Timestamps to Date objects
 const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => {
   const data = docSnap.data();
@@ -30,7 +33,6 @@ const processPatientDoc = (docSnap: DocumentSnapshot<DocumentData>): Patient => 
     insurance: data.insurance,
     responsiblePerson: data.responsiblePerson,
     emergencyContact: data.emergencyContact,
-    medicalNotes: data.medicalNotes,
     createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
     updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
   };
@@ -78,6 +80,7 @@ export async function addPatient(data: PatientFormData) {
 export async function getPatients(): Promise<Patient[]> {
   try {
     const patientsCollection = collection(db, "patients");
+    console.log("patientsCollection", patientsCollection);
     const q = query(patientsCollection, orderBy("paternalLastName", "asc"));
     const patientSnapshot = await getDocs(q);
     

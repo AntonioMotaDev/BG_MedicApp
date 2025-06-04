@@ -1,7 +1,6 @@
-
 import { initializeApp, getApps, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth"; // If auth is needed
+import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,27 +11,44 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// const app = initializeApp(firebaseConfig);
+// Validación de variables de entorno
+const requiredEnvVars = {
+  'NEXT_PUBLIC_FIREBASE_API_KEY': firebaseConfig.apiKey,
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN': firebaseConfig.authDomain,
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID': firebaseConfig.projectId,
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET': firebaseConfig.storageBucket,
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID': firebaseConfig.messagingSenderId,
+  'NEXT_PUBLIC_FIREBASE_APP_ID': firebaseConfig.appId,
+};
 
+const missingVars = Object.entries(requiredEnvVars)
+  .filter(([key, value]) => !value)
+  .map(([key]) => key);
 
-// Check for missing project ID, which is crucial for Firestore.
-if (!firebaseConfig.projectId) {
+if (missingVars.length > 0) {
   console.error(
-    "Firebase projectId is not defined in environment variables. " +
-    "Please ensure NEXT_PUBLIC_FIREBASE_PROJECT_ID is set correctly in your .env.local file. " +
-    "Firestore operations will likely fail."
+    "Firebase configuration error: Missing environment variables:\n" +
+    missingVars.map(v => `- ${v}`).join('\n') +
+    "\n\nPlease ensure all Firebase environment variables are set in your .env.local file."
   );
 }
 
-
 let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+let db: Firestore;
+let auth: Auth;
 
-const db: Firestore = getFirestore(app);
-const auth = getAuth(app); // If auth is needed
+try {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+
+  db = getFirestore(app);
+  auth = getAuth(app);
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+  throw new Error("Failed to initialize Firebase. Please check your configuration.");
+}
 
 export { app, db, auth };

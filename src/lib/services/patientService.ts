@@ -17,15 +17,30 @@ function calculateAge(dateOfBirth?: Date): number | undefined {
   return age;
 }
 
+// Helper function to safely parse dates
+function safeParseDateString(dateValue: any): Date | undefined {
+  if (!dateValue) return undefined;
+  if (dateValue instanceof Date) return dateValue;
+  if (typeof dateValue === 'string') return parseISO(dateValue);
+  return undefined;
+}
+
+function safeParsePickupTimestamp(timestampValue: any): Date | null {
+  if (timestampValue === null || timestampValue === undefined) return null;
+  if (timestampValue instanceof Date) return timestampValue;
+  if (typeof timestampValue === 'string') return parseISO(timestampValue);
+  return null;
+}
+
 export const patientService = {
   getAllPatients: async (): Promise<Patient[]> => {
-    return JSON.parse(JSON.stringify(patientsDB)).map((p: Patient) => ({
+    return JSON.parse(JSON.stringify(patientsDB)).map((p: any) => ({
       ...p,
-      dateOfBirth: p.dateOfBirth ? parseISO(p.dateOfBirth as any) : undefined,
-      pickupTimestamp: p.pickupTimestamp ? parseISO(p.pickupTimestamp as any) : null,
-      createdAt: p.createdAt ? parseISO(p.createdAt as any) : undefined,
-      updatedAt: p.updatedAt ? parseISO(p.updatedAt as any) : undefined,
-      age: p.dateOfBirth ? calculateAge(parseISO(p.dateOfBirth as any)) : p.age, // Recalculate age
+      dateOfBirth: safeParseDateString(p.dateOfBirth),
+      pickupTimestamp: safeParsePickupTimestamp(p.pickupTimestamp),
+      createdAt: safeParseDateString(p.createdAt),
+      updatedAt: safeParseDateString(p.updatedAt),
+      age: p.dateOfBirth ? calculateAge(safeParseDateString(p.dateOfBirth)) : p.age,
     }));
   },
 
@@ -34,11 +49,11 @@ export const patientService = {
     if (!patient) return null;
     return JSON.parse(JSON.stringify({
       ...patient,
-      dateOfBirth: patient.dateOfBirth ? parseISO(patient.dateOfBirth as any) : undefined,
-      pickupTimestamp: patient.pickupTimestamp ? parseISO(patient.pickupTimestamp as any) : null,
-      createdAt: patient.createdAt ? parseISO(patient.createdAt as any) : undefined,
-      updatedAt: patient.updatedAt ? parseISO(patient.updatedAt as any) : undefined,
-      age: patient.dateOfBirth ? calculateAge(parseISO(patient.dateOfBirth as any)) : patient.age, // Recalculate age
+      dateOfBirth: safeParseDateString(patient.dateOfBirth),
+      pickupTimestamp: safeParsePickupTimestamp(patient.pickupTimestamp),
+      createdAt: safeParseDateString(patient.createdAt),
+      updatedAt: safeParseDateString(patient.updatedAt),
+      age: patient.dateOfBirth ? calculateAge(safeParseDateString(patient.dateOfBirth)) : patient.age,
     }));
   },
 
@@ -47,9 +62,9 @@ export const patientService = {
     const newPatient: Patient = {
       ...data,
       id: (nextId++).toString(),
-      age: data.dateOfBirth ? calculateAge(new Date(data.dateOfBirth)) : data.age,
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-      pickupTimestamp: data.pickupTimestamp ? new Date(data.pickupTimestamp) : null,
+      age: data.dateOfBirth ? calculateAge(safeParseDateString(data.dateOfBirth)) : data.age,
+      dateOfBirth: safeParseDateString(data.dateOfBirth),
+      pickupTimestamp: safeParsePickupTimestamp(data.pickupTimestamp),
       createdAt: now,
       updatedAt: now,
     };
@@ -66,18 +81,15 @@ export const patientService = {
     const existingPatient = patientsDB[index];
     const now = new Date();
     
-    const updatedData = { ...existingPatient, ...data };
-
     const patientForSchema: Patient = {
-      ...existingPatient, // spread existing patient to ensure all fields are present for schema
+      ...existingPatient,
       ...data,
-      id, // ensure id is part of the object for schema
-      age: data.dateOfBirth ? calculateAge(new Date(data.dateOfBirth)) : (data.age !== undefined ? data.age : existingPatient.age),
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : existingPatient.dateOfBirth,
-      pickupTimestamp: data.pickupTimestamp !== undefined ? (data.pickupTimestamp ? new Date(data.pickupTimestamp) : null) : existingPatient.pickupTimestamp,
+      id,
+      age: data.dateOfBirth ? calculateAge(safeParseDateString(data.dateOfBirth)) : (data.age !== undefined ? data.age : existingPatient.age),
+      dateOfBirth: data.dateOfBirth !== undefined ? safeParseDateString(data.dateOfBirth) : existingPatient.dateOfBirth,
+      pickupTimestamp: data.pickupTimestamp !== undefined ? safeParsePickupTimestamp(data.pickupTimestamp) : existingPatient.pickupTimestamp,
       updatedAt: now,
-      // Ensure createdAt is preserved correctly if not part of `data`
-      createdAt: existingPatient.createdAt ? new Date(existingPatient.createdAt) : undefined,
+      createdAt: safeParseDateString(existingPatient.createdAt),
     };
     
     const validatedPatient = patientSchema.parse(patientForSchema);
@@ -101,13 +113,13 @@ export const patientService = {
       const responsiblePersonMatch = patient.responsiblePerson && patient.responsiblePerson.toLowerCase().includes(searchTerm);
       return fullName.includes(searchTerm) || phoneMatch || sexMatch || responsiblePersonMatch;
     });
-    return JSON.parse(JSON.stringify(results)).map((p: Patient) => ({
+    return JSON.parse(JSON.stringify(results)).map((p: any) => ({
       ...p,
-      dateOfBirth: p.dateOfBirth ? parseISO(p.dateOfBirth as any) : undefined,
-      pickupTimestamp: p.pickupTimestamp ? parseISO(p.pickupTimestamp as any) : null,
-      createdAt: p.createdAt ? parseISO(p.createdAt as any) : undefined,
-      updatedAt: p.updatedAt ? parseISO(p.updatedAt as any) : undefined,
-      age: p.dateOfBirth ? calculateAge(parseISO(p.dateOfBirth as any)) : p.age,
+      dateOfBirth: safeParseDateString(p.dateOfBirth),
+      pickupTimestamp: safeParsePickupTimestamp(p.pickupTimestamp),
+      createdAt: safeParseDateString(p.createdAt),
+      updatedAt: safeParseDateString(p.updatedAt),
+      age: p.dateOfBirth ? calculateAge(safeParseDateString(p.dateOfBirth)) : p.age,
     }));
   }
 };

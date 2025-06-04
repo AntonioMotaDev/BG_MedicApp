@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeSelector } from '@/components/ThemeSelector';
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,7 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="password">Contraseña</TabsTrigger>
+          <TabsTrigger value="theme">Tema</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -145,6 +147,10 @@ export default function SettingsPage() {
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="theme">
+          <ThemeSelector />
         </TabsContent>
       </Tabs>
     </div>

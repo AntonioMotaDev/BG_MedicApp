@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -87,5 +86,44 @@ body {
   */
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Remover bordes de componentes excepto elementos específicos */
+@layer components {
+  /* Remover bordes de cards por defecto */
+  .card-no-border {
+    @apply border-0 !important;
+  }
+  
+  /* Aplicar a cards automáticamente, excepto cuando se especifique mantener borde */
+  [data-border="true"] {
+    @apply border border-border;
+  }
+  
+  /* Mantener bordes solo en tablas y elementos de formulario */
+  table, 
+  table th, 
+  table td, 
+  table tr,
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea,
+  .table-container {
+    border-color: hsl(var(--border)) !important;
+  }
+  
+  /* Quitar bordes de cards, dialogs, popovers, etc */
+  .card:not([data-keep-border]),
+  .dialog-content:not([data-keep-border]),
+  .popover-content:not([data-keep-border]),
+  .dropdown-menu:not([data-keep-border]),
+  .alert:not([data-keep-border]) {
+    @apply border-0 !important;
   }
 }

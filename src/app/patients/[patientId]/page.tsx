@@ -1,8 +1,6 @@
-import { FC } from 'react';
 import { getPatientById } from "@/app/actions";
-import { notFound, useRouter } from 'next/navigation'; // useRouter might not be needed here if Button uses Link
-import type { Metadata, ResolvingMetadata } from 'next';
-import PatientDetailsClient from "@/components/PatientDetailsClient"; // Assuming this component exists
+import { notFound } from 'next/navigation';
+import PatientDetailsClient from "@/components/PatientDetailsClient";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -11,27 +9,7 @@ interface PatientDetailsPageProps {
   params: { patientId: string };
 }
 
-export async function generateMetadata(
-  { params }: PatientDetailsPageProps,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
-  const patient = await getPatientById(params.patientId);
-  if (!patient) {
-    return {
-      title: "Paciente no encontrado",
-    };
-  }
-  const fullName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName || ''}`.trim();
-  return {
-    title: `Detalles de ${fullName}`,
-    description: `Información detallada del paciente ${fullName}.`,
-    // openGraph: {
-    //   images: ['/some-specific-page-image.jpg'],
-    // },
-  };
-}
-
-const PatientDetailsPage: FC<PatientDetailsPageProps> = async ({ params }) => {
+const PatientDetailsPage = async ({ params }: PatientDetailsPageProps) => {
   const patient = await getPatientById(params.patientId);
 
   if (!patient) {

@@ -28,19 +28,6 @@ const DetailItem: FC<{ icon: React.ElementType, label: string, value?: string | 
 const PatientDetailsClient: FC<PatientDetailsClientProps> = ({ patient }) => {
   const fullName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName || ''}`.trim();
   
-  const calculateAge = (dob?: Date): string | undefined => {
-    if (!dob) return patient.age !== undefined ? `${patient.age} años` : undefined;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let ageYears = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      ageYears--;
-    }
-    return `${ageYears} años`;
-  };
-  
-  const displayAge = calculateAge(patient.dateOfBirth);
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-lg rounded-xl">
@@ -51,24 +38,21 @@ const PatientDetailsClient: FC<PatientDetailsClientProps> = ({ patient }) => {
           </div>
           <div>
             <CardTitle className="text-2xl sm:text-3xl text-primary">{fullName}</CardTitle>
-            {displayAge && <CardDescription className="text-base">{displayAge}</CardDescription>}
+            {patient.age && <CardDescription className="text-base">{patient.sex} , {patient.age} años</CardDescription>}
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         
-        <section>
+        {/* <section>
           <h3 className="text-xl font-semibold mb-4 text-foreground border-b pb-2">Información Personal</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <DetailItem icon={User} label="Nombre(s)" value={patient.firstName} />
-            <DetailItem icon={User} label="Apellido Paterno" value={patient.paternalLastName} />
-            <DetailItem icon={User} label="Apellido Materno" value={patient.maternalLastName} />
-            {patient.dateOfBirth && <DetailItem icon={CalendarDays} label="Fecha de Nacimiento" value={format(new Date(patient.dateOfBirth), 'PPP', { locale: es })} />}
-            <DetailItem icon={Users} label="Sexo" value={patient.sex} />
+            <DetailItem icon={CalendarDays} label="Edad" value={patient.age} />
+            <DetailItem icon={User} label="Sexo" value={patient.sex} />
           </div>
         </section>
 
-        <Separator />
+        <Separator /> */}
 
         <section>
           <h3 className="text-xl font-semibold mb-4 text-foreground border-b pb-2">Contacto y Dirección</h3>
@@ -87,35 +71,10 @@ const PatientDetailsClient: FC<PatientDetailsClientProps> = ({ patient }) => {
         <section>
           <h3 className="text-xl font-semibold mb-4 text-foreground border-b pb-2">Información Médica y Adicional</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <DetailItem icon={Weight} label="Peso (kg)" value={patient.weightKg} />
-            <DetailItem icon={Ruler} label="Altura (cm)" value={patient.heightCm} />
             <DetailItem icon={Phone} label="Contacto de Emergencia" value={patient.emergencyContact} />
             <DetailItem icon={Info} label="Seguro / Derechohabiencia" value={patient.insurance} />
             <DetailItem icon={Users} label="Persona Responsable" value={patient.responsiblePerson} />
-            {patient.pickupTimestamp && <DetailItem icon={Clock} label="Fecha/Hora de Recogida" value={format(new Date(patient.pickupTimestamp), 'PPP p', { locale: es })} />}
           </div>
-            {patient.medicalNotes && (
-                <div className="mt-4">
-                    <div className="flex items-start space-x-3">
-                        <Stethoscope className="h-5 w-5 text-primary mt-1 shrink-0" />
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">Notas Médicas</p>
-                            <div className="mt-1 p-3 bg-muted/50 rounded-md max-h-60 overflow-y-auto">
-                                <p className="text-base text-foreground whitespace-pre-wrap break-words">{patient.medicalNotes}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </section>
-        
-        {(patient.createdAt || patient.updatedAt) && <Separator />}
-        
-        <section>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs text-muted-foreground">
-                {patient.createdAt && <p>Registro Creado: {format(new Date(patient.createdAt), 'dd/MM/yyyy HH:mm', { locale: es })}</p>}
-                {patient.updatedAt && <p>Última Actualización: {format(new Date(patient.updatedAt), 'dd/MM/yyyy HH:mm', { locale: es })}</p>}
-            </div>
         </section>
 
       </CardContent>
