@@ -43,6 +43,8 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+FIREBASE_SETUP.md
+README_AUTH.md
 
 # env
 .env.local
