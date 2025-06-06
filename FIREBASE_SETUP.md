@@ -45,16 +45,6 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=tu_app_id
 ```
 
-### Ejemplo real:
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBNlYH01_9Hc5s2MgKUq2TLiiwT8xvdabc
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=bg-medicapp-123.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=bg-medicapp-123
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=bg-medicapp-123.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012
-NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abc123def456ghi789jkl0
-```
-
 ## 4. Reiniciar el servidor
 
 Después de configurar las variables de entorno:

@@ -60,6 +60,11 @@ export default function PatientManagementPage() {
     }
   };
 
+  const handleCreateRecord = (patient: Patient) => {
+    if (!patient.id) return;
+    router.push(`/records/new?patientId=${patient.id}`);
+  };
+
   const closeEditForm = () => {
     setIsEditFormOpen(false);
     setEditingPatient(undefined);
@@ -108,6 +113,7 @@ export default function PatientManagementPage() {
         patients={patients}
         isLoading={isLoading}
         onEdit={handleEditPatient}
+        onCreateRecord={handleCreateRecord}
         onDeleteRequest={async (patient: Patient) => {
           if (!patient.id) return;
           const confirmDeleteTrigger = document.getElementById(`delete-confirm-trigger-${patient.id}`);

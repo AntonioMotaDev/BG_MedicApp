@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, Eye, DownloadIcon, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, DownloadIcon, Loader2, FileText } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ interface PatientTableProps {
   onDeleteRequest: (patient: Patient) => void;
   onExport: (patient: Patient) => Promise<void>;
   onViewDetails: (patient: Patient) => void;
+  onCreateRecord: (patient: Patient) => void;
 }
 
 const PatientTable: FC<PatientTableProps> = ({
@@ -36,6 +37,7 @@ const PatientTable: FC<PatientTableProps> = ({
   onDeleteRequest,
   onExport,
   onViewDetails,
+  onCreateRecord,
 }) => {
 
   const getDisplayAge = (patient: Patient): string => {
@@ -88,6 +90,10 @@ const PatientTable: FC<PatientTableProps> = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onCreateRecord(patient)}>
+                        <FileText className="mr-2 h-4 w-4" /> Crear Registro
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => onViewDetails(patient)}>
                         <Eye className="mr-2 h-4 w-4" /> Ver Detalles
                       </DropdownMenuItem>
