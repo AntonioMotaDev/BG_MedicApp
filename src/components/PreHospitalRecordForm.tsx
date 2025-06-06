@@ -12,8 +12,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, MapPin, Activity, FileText, User, Heart, Pill, Zap, Baby, UserX, AlertTriangle, Building2, Eraser, Download, Upload, PenTool } from 'lucide-react';
-import type { Patient } from '@/lib/schema';
+import { AlertCircle, Clock, MapPin, Activity, FileText, User, Heart, Pill, Zap, Baby, UserX, AlertTriangle, Building2, Eraser, Download, Upload, PenTool, Save, CheckCircle2, Clock4 } from 'lucide-react';
+import type { Patient, TabStatus, TabConfig } from '@/lib/schema';
+import { savePreHospitalRecord, updatePreHospitalRecordProgress } from '@/app/actions';
+import { toast } from 'sonner';
 
 interface PreHospitalRecordFormProps {
   patient: Patient;
@@ -130,12 +132,96 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   const [activeSide, setActiveSide] = useState<'front' | 'back'>('front');
   const [selectedInfluencias, setSelectedInfluencias] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [firmaDataURL, setFirmaDataURL] = useState<string>('');
+  const [recordId, setRecordId] = useState<string | null>(null);
+  const [tabStatuses, setTabStatuses] = useState<Record<string, TabStatus>>({});
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
+  // Tab configurations with required fields for completion status
+  const tabConfigs: TabConfig[] = [
+    {
+      id: "datos-registro",
+      name: "Datos Registro",
+      icon: AlertCircle,
+      requiredFields: ["fecha"],
+      optionalFields: ["convenio", "episodio", "folio", "solicitadoPor"]
+    },
+    {
+      id: "datos-captacion",
+      name: "Captación",
+      icon: Clock,
+      requiredFields: [],
+      optionalFields: ["horaLlegada", "horaArribo", "tiempoEspera", "horaTermino", "ubicacion", "tipoServicio", "lugarOcurrencia"]
+    },
+    {
+      id: "antecedentes",
+      name: "Antecedentes",
+      icon: FileText,
+      requiredFields: [],
+      optionalFields: ["antecedentesPatologicos", "tipoAntecedente", "agenteCasual", "cinematica", "medidaSeguridad"]
+    },
+    {
+      id: "lesiones",
+      name: "Lesiones",
+      icon: Activity,
+      requiredFields: [],
+      optionalFields: ["lesiones"]
+    },
+    {
+      id: "manejo",
+      name: "Manejo",
+      icon: Heart,
+      requiredFields: [],
+      optionalFields: ["viaAerea", "canalizacion", "empaquetamiento", "inmovilizacion", "monitor", "rcpBasica", "mastPna", "collarinCervical", "desfibrilacion", "apoyoVent", "oxigeno", "otroManejo"]
+    },
+    {
+      id: "medicamentos",
+      name: "Medicamentos",
+      icon: Pill,
+      requiredFields: [],
+      optionalFields: ["medicamentos"]
+    },
+    {
+      id: "gineco-obstetrica",
+      name: "Gineco-obstétrica",
+      icon: Baby,
+      requiredFields: [],
+      optionalFields: ["parto", "aborto", "hxVaginal", "fechaUltimaMenstruacion", "semanasGestacion"]
+    },
+    {
+      id: "negativa",
+      name: "Negativa",
+      icon: UserX,
+      requiredFields: [],
+      optionalFields: ["negativaAtencion", "firmaPaciente", "firmaTestigo"]
+    },
+    {
+      id: "justificacion-prioridad",
+      name: "Prioridad",
+      icon: AlertTriangle,
+      requiredFields: [],
+      optionalFields: ["prioridad", "pupilas", "colorPiel", "piel", "temperatura", "influenciadoPor"]
+    },
+    {
+      id: "unidad-medica",
+      name: "Unidad Médica",
+      icon: Building2,
+      requiredFields: [],
+      optionalFields: ["lugarOrigen", "lugarConsulta", "lugarDestino", "ambulanciaNumero", "ambulanciaPlacas", "personal", "doctor"]
+    },
+    {
+      id: "medico-receptor",
+      name: "Médico Receptor",
+      icon: User,
+      requiredFields: ["medicoReceptorNombre", "horaEntrega"],
+      optionalFields: ["medicoReceptorFirma"]
+    }
+  ];
+
+  const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       fecha: new Date().toISOString().split('T')[0],
       antecedentesPatologicos: [],
@@ -197,6 +283,101 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   const tipoServicio = watch('tipoServicio');
   const tipoAntecedente = watch('tipoAntecedente');
   const negativaAtencion = watch('negativaAtencion');
+
+  // Calculate tab status based on form data
+  const calculateTabStatus = (tabId: string, formData: any): TabStatus => {
+    const config = tabConfigs.find(tab => tab.id === tabId);
+    if (!config) return 'empty';
+
+    const requiredFilled = config.requiredFields.every(field => {
+      const value = formData[field];
+      return value !== null && value !== undefined && value !== '' && value !== false;
+    });
+
+    const optionalFilled = config.optionalFields.some(field => {
+      const value = formData[field];
+      if (Array.isArray(value)) return value.length > 0;
+      return value !== null && value !== undefined && value !== '' && value !== false;
+    });
+
+    if (!requiredFilled && !optionalFilled) return 'empty';
+    if (requiredFilled) return 'completed';
+    return 'partial';
+  };
+
+  // Update tab statuses when form data changes
+  useEffect(() => {
+    const formData = getValues();
+    const newStatuses: Record<string, TabStatus> = {};
+    
+    tabConfigs.forEach(config => {
+      newStatuses[config.id] = calculateTabStatus(config.id, formData);
+    });
+    
+    setTabStatuses(newStatuses);
+  }, [watch(), selectedPatologias, lesiones, selectedInfluencias, firmaDataURL]);
+
+  // Get tab trigger class based on status
+  const getTabTriggerClass = (tabId: string): string => {
+    const status = tabStatuses[tabId] || 'empty';
+    const baseClasses = "flex flex-col items-center gap-1 p-3 h-auto text-xs transition-colors";
+    
+    switch (status) {
+      case 'completed':
+        return `${baseClasses} data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=inactive]:text-green-600 data-[state=inactive]:bg-green-50`;
+      case 'partial':
+        return `${baseClasses} data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=inactive]:text-yellow-600 data-[state=inactive]:bg-yellow-50`;
+      default:
+        return `${baseClasses} data-[state=active]:bg-gray-100 data-[state=active]:text-gray-800 data-[state=inactive]:text-gray-600`;
+    }
+  };
+
+  // Get status icon
+  const getStatusIcon = (tabId: string) => {
+    const status = tabStatuses[tabId] || 'empty';
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="h-3 w-3 text-green-600" />;
+      case 'partial':
+        return <Clock4 className="h-3 w-3 text-yellow-600" />;
+      default:
+        return null;
+    }
+  };
+
+  // Save progress function
+  const saveProgress = async () => {
+    setIsSavingProgress(true);
+    try {
+      const formData = getValues();
+      const completedSections = Object.entries(tabStatuses)
+        .filter(([_, status]) => status === 'completed')
+        .map(([tabId, _]) => tabId);
+
+      const recordData = {
+        ...(recordId && { id: recordId }),
+        patientId: patient.id || '',
+        ...formData,
+        antecedentesPatologicos: selectedPatologias,
+        lesiones,
+        influenciadoPor: selectedInfluencias,
+        medicoReceptorFirma: firmaDataURL,
+        completedSections,
+        status: completedSections.length === 0 ? 'draft' : 
+                completedSections.length < tabConfigs.length ? 'partial' : 'completed'
+      };
+
+      const savedRecordId = await savePreHospitalRecord(recordData);
+      setRecordId(savedRecordId);
+      
+      toast.success('Progreso guardado exitosamente');
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast.error('Error al guardar el progreso');
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
 
   const handlePatologiaChange = (patologia: string, checked: boolean) => {
     const updated = checked 
@@ -488,87 +669,198 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
         <CardDescription>
           Complete el registro de atención médica prehospitalaria para {patient.firstName} {patient.paternalLastName}
         </CardDescription>
+        
+        {/* Progress Indicator */}
+        <div className="mt-4 p-4 bg-muted/30 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Progreso del Registro</span>
+            <span className="text-sm text-muted-foreground">
+              {Object.values(tabStatuses).filter(status => status === 'completed').length} / {tabConfigs.length} secciones completadas
+            </span>
+          </div>
+          
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+              style={{ 
+                width: `${(Object.values(tabStatuses).filter(status => status === 'completed').length / tabConfigs.length) * 100}%` 
+              }}
+            />
+          </div>
+          
+          <div className="flex items-center gap-4 mt-3 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-gray-300 rounded-full" />
+              <span>Sin llenar</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+              <span>Parcial</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 bg-green-500 rounded-full" />
+              <span>Completo</span>
+            </div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-2 gap-2">
             <TabsTrigger 
               value="datos-registro" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('datos-registro')}
             >
-              <AlertCircle className="h-4 w-4" />
+              <div className="relative">
+                <AlertCircle className="h-4 w-4" />
+                {getStatusIcon('datos-registro') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('datos-registro')}
+                  </div>
+                )}
+              </div>
               <span>Datos Registro</span>
             </TabsTrigger>
             <TabsTrigger 
               value="datos-captacion" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('datos-captacion')}
             >
-              <Clock className="h-4 w-4" />
+              <div className="relative">
+                <Clock className="h-4 w-4" />
+                {getStatusIcon('datos-captacion') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('datos-captacion')}
+                  </div>
+                )}
+              </div>
               <span>Captación</span>
             </TabsTrigger>
             <TabsTrigger 
               value="antecedentes" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('antecedentes')}
             >
-              <FileText className="h-4 w-4" />
+              <div className="relative">
+                <FileText className="h-4 w-4" />
+                {getStatusIcon('antecedentes') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('antecedentes')}
+                  </div>
+                )}
+              </div>
               <span>Antecedentes</span>
             </TabsTrigger>
             <TabsTrigger 
               value="lesiones" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('lesiones')}
             >
-              <Activity className="h-4 w-4" />
+              <div className="relative">
+                <Activity className="h-4 w-4" />
+                {getStatusIcon('lesiones') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('lesiones')}
+                  </div>
+                )}
+              </div>
               <span>Lesiones</span>
             </TabsTrigger>
             <TabsTrigger 
               value="manejo" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('manejo')}
             >
-              <Heart className="h-4 w-4" />
+              <div className="relative">
+                <Heart className="h-4 w-4" />
+                {getStatusIcon('manejo') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('manejo')}
+                  </div>
+                )}
+              </div>
               <span>Manejo</span>
             </TabsTrigger>
             <TabsTrigger 
               value="medicamentos" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('medicamentos')}
             >
-              <Pill className="h-4 w-4" />
+              <div className="relative">
+                <Pill className="h-4 w-4" />
+                {getStatusIcon('medicamentos') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('medicamentos')}
+                  </div>
+                )}
+              </div>
               <span>Medicamentos</span>
             </TabsTrigger>
             {esPacienteFemenino && (
               <TabsTrigger 
                 value="gineco-obstetrica" 
-                className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+                className={getTabTriggerClass('gineco-obstetrica')}
               >
-                <Baby className="h-4 w-4" />
+                <div className="relative">
+                  <Baby className="h-4 w-4" />
+                  {getStatusIcon('gineco-obstetrica') && (
+                    <div className="absolute -top-1 -right-1">
+                      {getStatusIcon('gineco-obstetrica')}
+                    </div>
+                  )}
+                </div>
                 <span>Gineco-obstétrica</span>
               </TabsTrigger>
             )}
             <TabsTrigger 
               value="negativa" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('negativa')}
             >
-              <UserX className="h-4 w-4" />
+              <div className="relative">
+                <UserX className="h-4 w-4" />
+                {getStatusIcon('negativa') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('negativa')}
+                  </div>
+                )}
+              </div>
               <span>Negativa</span>
             </TabsTrigger>
             <TabsTrigger 
               value="justificacion-prioridad" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('justificacion-prioridad')}
             >
-              <AlertTriangle className="h-4 w-4" />
+              <div className="relative">
+                <AlertTriangle className="h-4 w-4" />
+                {getStatusIcon('justificacion-prioridad') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('justificacion-prioridad')}
+                  </div>
+                )}
+              </div>
               <span>Prioridad</span>
             </TabsTrigger>
             <TabsTrigger 
               value="unidad-medica" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('unidad-medica')}
             >
-              <Building2 className="h-4 w-4" />
+              <div className="relative">
+                <Building2 className="h-4 w-4" />
+                {getStatusIcon('unidad-medica') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('unidad-medica')}
+                  </div>
+                )}
+              </div>
               <span>Unidad Médica</span>
             </TabsTrigger>
             <TabsTrigger 
               value="medico-receptor" 
-              className="flex flex-col items-center gap-1 p-3 h-auto text-xs"
+              className={getTabTriggerClass('medico-receptor')}
             >
-              <User className="h-4 w-4" />
+              <div className="relative">
+                <User className="h-4 w-4" />
+                {getStatusIcon('medico-receptor') && (
+                  <div className="absolute -top-1 -right-1">
+                    {getStatusIcon('medico-receptor')}
+                  </div>
+                )}
+              </div>
               <span>Médico Receptor</span>
             </TabsTrigger>
           </TabsList>
@@ -1630,13 +1922,26 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
             </TabsContent>
 
             {/* Botones de acción */}
-            <div className="flex justify-between pt-6">
+            <div className="flex justify-between items-center pt-6 border-t">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Guardando...' : 'Guardar Registro'}
-              </Button>
+              
+              <div className="flex gap-3">
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={saveProgress}
+                  disabled={isSavingProgress}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSavingProgress ? 'Guardando...' : 'Guardar Progreso'}
+                </Button>
+                
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? 'Guardando...' : 'Guardar Registro Completo'}
+                </Button>
+              </div>
             </div>
           </form>
         </Tabs>

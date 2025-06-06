@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import Footer from '@/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { ThemeProvider } from '@/hooks/use-theme';
 import './globals.css';
 
@@ -28,6 +29,7 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
             </div>
           </div>
           <Toaster />
+          <SonnerToaster position="top-right" />
         </ThemeProvider>
       </body>
     </html>

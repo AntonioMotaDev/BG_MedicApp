@@ -68,3 +68,134 @@ export const RegisterSchema = z.object({
 });
 
 export type RegisterFormData = z.infer<typeof RegisterSchema>;
+
+// Pre-Hospital Record Schema
+export const preHospitalRecordSchema = z.object({
+  id: z.string().optional(),
+  patientId: z.string(),
+  
+  // Datos del registro
+  convenio: z.string().optional(),
+  episodio: z.string().optional(),
+  folio: z.string().optional(),
+  fecha: z.string(),
+  solicitadoPor: z.string().optional(),
+  
+  // Datos de captación
+  horaLlegada: z.string().optional(),
+  horaArribo: z.string().optional(),
+  tiempoEspera: z.string().optional(),
+  horaTermino: z.string().optional(),
+  ubicacion: z.string().optional(),
+  tipoServicio: z.string().optional(),
+  otroTipoServicio: z.string().optional(),
+  lugarOcurrencia: z.string().optional(),
+  
+  // Antecedentes patológicos
+  antecedentesPatologicos: z.array(z.string()).optional(),
+  otraPatologia: z.string().optional(),
+  
+  // Antecedentes clínicos
+  tipoAntecedente: z.string().optional(),
+  otroTipoAntecedente: z.string().optional(),
+  agenteCasual: z.string().optional(),
+  cinematica: z.string().optional(),
+  medidaSeguridad: z.string().optional(),
+
+  // Localización de lesiones
+  lesiones: z.array(z.object({
+    id: z.string(),
+    type: z.string(),
+    x: z.number(),
+    y: z.number(),
+    side: z.enum(['front', 'back'])
+  })).optional(),
+
+  // Manejo
+  viaAerea: z.boolean().optional(),
+  canalizacion: z.boolean().optional(),
+  empaquetamiento: z.boolean().optional(),
+  inmovilizacion: z.boolean().optional(),
+  monitor: z.boolean().optional(),
+  rcpBasica: z.boolean().optional(),
+  mastPna: z.boolean().optional(),
+  collarinCervical: z.boolean().optional(),
+  desfibrilacion: z.boolean().optional(),
+  apoyoVent: z.boolean().optional(),
+  oxigeno: z.string().optional(),
+  otroManejo: z.string().optional(),
+
+  // Medicamentos
+  medicamentos: z.string().optional(),
+
+  // Urgencias Gineco-obstétricas
+  parto: z.boolean().optional(),
+  aborto: z.boolean().optional(),
+  hxVaginal: z.boolean().optional(),
+  fechaUltimaMenstruacion: z.string().optional(),
+  semanasGestacion: z.string().optional(),
+  ruidosCardiacosFetales: z.string().optional(),
+  expulsionPlacenta: z.string().optional(),
+  horaExpulsionPlacenta: z.string().optional(),
+  gesta: z.string().optional(),
+  partos: z.string().optional(),
+  cesareas: z.string().optional(),
+  abortos: z.string().optional(),
+  metodosAnticonceptivos: z.string().optional(),
+
+  // Negativa de Atención
+  negativaAtencion: z.boolean().optional(),
+  firmaPaciente: z.string().optional(),
+  firmaTestigo: z.string().optional(),
+
+  // Justificación de prioridad
+  prioridad: z.string().optional(),
+  pupilas: z.string().optional(),
+  colorPiel: z.string().optional(),
+  piel: z.string().optional(),
+  temperatura: z.string().optional(),
+  influenciadoPor: z.array(z.string()).optional(),
+  otroInfluencia: z.string().optional(),
+
+  // Unidad Médica que Recibe
+  lugarOrigen: z.string().optional(),
+  lugarConsulta: z.string().optional(),
+  lugarDestino: z.string().optional(),
+  ambulanciaNumero: z.string().optional(),
+  ambulanciaPlacas: z.string().optional(),
+  personal: z.string().optional(),
+  doctor: z.string().optional(),
+
+  // Médico Receptor
+  medicoReceptorNombre: z.string().optional(),
+  medicoReceptorFirma: z.string().optional(),
+  horaEntrega: z.string().optional(),
+
+  // Status del registro
+  status: z.enum(['draft', 'partial', 'completed']).default('draft'),
+  completedSections: z.array(z.string()).default([]),
+  
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export type PreHospitalRecord = z.infer<typeof preHospitalRecordSchema>;
+
+export const PreHospitalRecordFormSchema = preHospitalRecordSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PreHospitalRecordFormData = z.infer<typeof PreHospitalRecordFormSchema>;
+
+// Tab completion status type
+export type TabStatus = 'empty' | 'partial' | 'completed';
+
+export interface TabConfig {
+  id: string;
+  name: string;
+  icon: any;
+  requiredFields: string[];
+  optionalFields: string[];
+}
