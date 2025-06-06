@@ -307,15 +307,15 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
 
   // Update tab statuses when form data changes
   useEffect(() => {
-    const formData = getValues();
-    const newStatuses: Record<string, TabStatus> = {};
-    
-    tabConfigs.forEach(config => {
-      newStatuses[config.id] = calculateTabStatus(config.id, formData);
+    const subscription = watch((formData) => {
+      const newStatuses: Record<string, TabStatus> = {};
+      tabConfigs.forEach(config => {
+        newStatuses[config.id] = calculateTabStatus(config.id, formData);
+      });
+      setTabStatuses(newStatuses);
     });
-    
-    setTabStatuses(newStatuses);
-  }, [watch(), selectedPatologias, lesiones, selectedInfluencias, firmaDataURL]);
+    return () => subscription.unsubscribe();
+  }, [watch, tabConfigs]);
 
   // Get tab trigger class based on status
   const getTabTriggerClass = (tabId: string): string => {
