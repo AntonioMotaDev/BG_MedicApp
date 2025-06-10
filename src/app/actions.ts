@@ -90,7 +90,7 @@ export async function getPatients(): Promise<Patient[]> {
           return processPatientDoc(docSnap);
         } catch (error) {
           console.error(`Failed to process patient document ${docSnap.id}:`, error);
-          return null;
+          return null; 
         }
       })
       .filter((patient): patient is Patient => patient !== null);

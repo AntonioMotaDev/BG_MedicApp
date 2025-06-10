@@ -38,11 +38,11 @@ let db: Firestore;
 let auth: Auth;
 
 try {
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApps()[0];
-  }
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
 
   db = getFirestore(app);
   auth = getAuth(app);

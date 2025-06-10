@@ -52,11 +52,11 @@ export default function LoginPage() {
       const result = await login(data);
       
       if (result.success) {
-        toast({
-          title: "Inicio de sesión exitoso",
-          description: "Bienvenido de nuevo.",
-        });
-        router.push('/');
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Bienvenido de nuevo.",
+      });
+      router.push('/');
       } else {
         toast({
           title: "Error de inicio de sesión",
@@ -131,12 +131,12 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Correo electrónico</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="ejemplo@correo.com"
+            <Input
+              type="email"
+              placeholder="ejemplo@correo.com"
                         {...field}
                         value={field.value || ""}
-                      />
+            />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -151,7 +151,7 @@ export default function LoginPage() {
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input
+            <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           {...field}
@@ -170,22 +170,22 @@ export default function LoginPage() {
                             <Eye className="h-4 w-4" />
                           )}
                         </Button>
-                      </div>
+          </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-            </form>
+            {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+          </Button>
+        </form>
           </Form>
 
           <div className="mt-6">
@@ -226,7 +226,7 @@ export default function LoginPage() {
               <p><strong>Admin:</strong> admin@medicapp.com / admin123456</p>
               <p><strong>Usuario:</strong> Crear cuenta nueva</p>
             </div>
-          </div>
+      </div>
         </CardContent>
       </Card>
     </div>

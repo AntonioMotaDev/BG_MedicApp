@@ -16,14 +16,16 @@ interface RootLayoutProps {
 const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   return (
     <html lang="es">
-      <body>
+      <body className="h-full">
         <ThemeProvider>
-          <div className="flex h-screen bg-background">
+          <div className="min-h-screen flex bg-background">
             <Sidebar />
-            <div className="flex flex-col flex-1 overflow-hidden">
+            <div className="flex flex-col flex-1 min-h-screen">
               <Header />
-              <main className="flex-1 overflow-y-auto p-4">
-                {children}
+              <main className="flex-1 p-4 overflow-y-auto bg-background">
+                <div className="max-w-full h-full">
+                  {children}
+                </div>
               </main>
               <Footer />
             </div>

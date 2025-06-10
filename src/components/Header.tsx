@@ -50,23 +50,23 @@ const Header: FC = () => {
   };
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center px-4 sm:px-6">
+    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0 sticky top-0 z-40">
+      <div className="flex h-14 items-center px-4 sm:px-6">
         <div className="flex flex-1 items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
-              <h2 className="text-lg font-semibold">BG MedicApp</h2>
+              <h2 className="text-lg font-semibold hidden sm:block">BG MedicApp</h2>
             </Link>
           </div>
 
           {isAuthenticated && user ? (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative h-9 w-9">
+                <Bell className="h-4 w-4" />
                 <span className="sr-only">Notificaciones</span>
                 {/* Badge para notificaciones pendientes */}
                 <Badge 
@@ -80,13 +80,13 @@ const Header: FC = () => {
               {/* User Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2 px-3">
-                    <Avatar className="h-8 w-8">
+                  <Button variant="ghost" className="flex items-center space-x-2 px-2 sm:px-3 h-9">
+                    <Avatar className="h-7 w-7">
                       <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`} alt={user.name} />
                       <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
                     </Avatar>
                     <div className="hidden md:flex flex-col items-start">
-                      <span className="text-sm font-medium">{user.name}</span>
+                      <span className="text-sm font-medium truncate max-w-32">{user.name}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-muted-foreground capitalize">{user.role}</span>
                         {isAdmin && (
@@ -136,10 +136,10 @@ const Header: FC = () => {
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild>
                 <Link href="/login">Iniciar Sesión</Link>
               </Button>
-              <Button asChild>
+              <Button size="sm" asChild>
                 <Link href="/register">Registrarse</Link>
               </Button>
             </div>

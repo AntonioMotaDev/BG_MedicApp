@@ -41,7 +41,7 @@ export default function ReportsPage() {
     }
   };
 
-  const reports = [    
+  const reports = [
     {
       title: "Ver Registros",
       description: "Lista completa de registros",
@@ -52,10 +52,10 @@ export default function ReportsPage() {
       onClick: () => router.push('/records'),
       requiresAdmin: false
     },
-    { 
+    {
       title: "Nuevo Registro",
       description: "Crear Registro de Atención Prehospitalaria",
-      icon: FileText, 
+      icon: FileText,
       type: "nuevo",
       buttonIcon: Plus,
       buttonText: "Crear Registro",
@@ -91,15 +91,15 @@ export default function ReportsPage() {
 
   return (
     <ProtectedRoute requireAuth={true}>
-      <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Registros de Atención Prehospitalaria</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Registros de Atención Prehospitalaria</h1>
             <p className="text-muted-foreground">
               Gestión de registros médicos - {user?.name}
             </p>
           </div>
-        </div>
+      </div>
 
         {availableReports.length === 0 ? (
           <Card>
@@ -111,34 +111,34 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {availableReports.map((report) => (
-              <Card key={report.type}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <report.icon className="h-5 w-5" />
-                    {report.title}
-                  </CardTitle>
-                  <CardDescription>
-                    {report.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button
-                    onClick={() => handleReportGenerate(report.type)}
+          <Card key={report.type}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <report.icon className="h-5 w-5" />
+                {report.title}
+              </CardTitle>
+              <CardDescription>
+                {report.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                onClick={() => handleReportGenerate(report.type)}
                     disabled={isLoading && report.type !== 'nuevo'}
-                    className="w-full"
-                    variant="default"
-                  >
-                    <report.buttonIcon className="mr-2 h-4 w-4" />
+                className="w-full"
+                variant="default"
+              >
+                <report.buttonIcon className="mr-2 h-4 w-4" />
                     {isLoading && report.type !== 'nuevo' ? "Cargando..." : report.buttonText}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+        )}
+    </div>
     </ProtectedRoute>
   );
 }

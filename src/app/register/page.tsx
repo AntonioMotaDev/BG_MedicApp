@@ -52,10 +52,10 @@ export default function RegisterPage() {
       const result = await register(data);
       
       if (result.success) {
-        toast({
-          title: "Registro exitoso",
+      toast({
+        title: "Registro exitoso",
           description: "Su cuenta ha sido creada correctamente. Bienvenido al sistema.",
-        });
+      });
         router.push('/');
       } else {
         toast({
@@ -94,12 +94,12 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Nombre completo</FormLabel>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="Juan Pérez"
+            <Input
+              type="text"
+              placeholder="Juan Pérez"
                         {...field}
                         value={field.value || ""}
-                      />
+            />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -113,12 +113,12 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel>Correo electrónico</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="ejemplo@correo.com"
+            <Input
+              type="email"
+              placeholder="ejemplo@correo.com"
                         {...field}
                         value={field.value || ""}
-                      />
+            />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,7 +133,7 @@ export default function RegisterPage() {
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input
+            <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
                           {...field}
@@ -152,7 +152,7 @@ export default function RegisterPage() {
                             <Eye className="h-4 w-4" />
                           )}
                         </Button>
-                      </div>
+          </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -167,7 +167,7 @@ export default function RegisterPage() {
                     <FormLabel>Confirmar contraseña</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Input
+            <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
                           {...field}
@@ -186,22 +186,22 @@ export default function RegisterPage() {
                             <Eye className="h-4 w-4" />
                           )}
                         </Button>
-                      </div>
+          </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
-              </Button>
-            </form>
+            {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
+          </Button>
+        </form>
           </Form>
 
           <div className="mt-6">
@@ -220,8 +220,8 @@ export default function RegisterPage() {
               <Button variant="outline" asChild className="w-full">
                 <Link href="/login">
                   <LogIn className="mr-2 h-4 w-4" />
-                  Iniciar sesión
-                </Link>
+            Iniciar sesión
+          </Link>
               </Button>
             </div>
           </div>
@@ -233,8 +233,8 @@ export default function RegisterPage() {
             <p className="mt-2">
               <strong>Nota:</strong> Las cuentas nuevas tienen rol de usuario. 
               Solo los administradores pueden gestionar pacientes.
-            </p>
-          </div>
+        </p>
+      </div>
         </CardContent>
       </Card>
     </div>

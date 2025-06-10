@@ -2,8 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global layout fixes */
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure consistent heights across the app */
+#__next, [data-nextjs-hydrated] {
+  height: 100%;
 }
 
 @layer base {
@@ -89,6 +103,45 @@ body {
   }
 }
 
+/* Layout utilities */
+@layer utilities {
+  .layout-container {
+    @apply min-h-screen flex flex-col;
+  }
+  
+  .layout-content {
+    @apply flex-1 overflow-hidden;
+  }
+  
+  .layout-footer {
+    @apply mt-auto shrink-0;
+  }
+  
+  /* Scrollbar styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--background));
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground));
+    border-radius: 4px;
+    border: 2px solid hsl(var(--background));
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--accent));
+  }
+}
+
 /* Remover bordes de componentes excepto elementos específicos */
 @layer components {
   /* Remover bordes de cards por defecto */
@@ -112,6 +165,8 @@ body {
   input[type="number"],
   input[type="tel"],
   input[type="url"],
+  input[type="date"],
+  input[type="time"],
   select,
   textarea,
   .table-container {
@@ -125,5 +180,36 @@ body {
   .dropdown-menu:not([data-keep-border]),
   .alert:not([data-keep-border]) {
     @apply border-0 !important;
+  }
+  
+  /* Form layouts */
+  .form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+  
+  .form-grid-full {
+    @apply grid grid-cols-1 gap-4;
+  }
+  
+  /* Tab improvements */
+  .tabs-trigger-enhanced {
+    @apply transition-all duration-200 hover:bg-muted/50;
+  }
+  
+  /* Modal improvements */
+  .modal-content {
+    @apply max-h-[85vh] overflow-y-auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
   }
 }
