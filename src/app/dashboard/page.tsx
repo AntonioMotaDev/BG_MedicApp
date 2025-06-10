@@ -19,7 +19,7 @@ const DashboardPage: FC = () => {
       title: "Registros",
       description: "Gestione los registros de atención prehospitalaria",
       icon: FileText,
-      href: "/reports",
+      href: "/prehospital-records",
     },
     {
       title: "Citas",

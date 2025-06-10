@@ -43,7 +43,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
       active: pathname === '/',
     },
     {
-      label: 'Reportes',
+      label: 'Registros   ',
       icon: FileText,
       href: '/reports',
       active: pathname === '/reports',
