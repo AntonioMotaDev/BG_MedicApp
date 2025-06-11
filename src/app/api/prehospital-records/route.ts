@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { savePreHospitalRecord, getPreHospitalRecordsByPatient } from '@/app/actions';
+import { savePreHospitalRecord, getPreHospitalRecordsByPatient, getAllPreHospitalRecords } from '@/app/actions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,16 +27,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const patientId = searchParams.get('patientId');
     
-    if (!patientId) {
-      return NextResponse.json(
-        { error: 'Patient ID is required' },
-        { status: 400 }
-      );
+    if (patientId) {
+      // Get records for specific patient
+      const records = await getPreHospitalRecordsByPatient(patientId);
+      return NextResponse.json(records, { status: 200 });
+    } else {
+      // Get all records
+      const records = await getAllPreHospitalRecords();
+      return NextResponse.json(records, { status: 200 });
     }
-    
-    const records = await getPreHospitalRecordsByPatient(patientId);
-    
-    return NextResponse.json(records, { status: 200 });
   } catch (error) {
     console.error('Error in GET /api/prehospital-records:', error);
     return NextResponse.json(

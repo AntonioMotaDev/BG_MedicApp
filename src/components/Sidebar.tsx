@@ -45,8 +45,8 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
     {
       label: 'Registros   ',
       icon: FileText,
-      href: '/reports',
-      active: pathname === '/reports',
+      href: '/prehospital-records',
+      active: pathname === '/prehospital-records',
     },
     {
       label: 'Citas',

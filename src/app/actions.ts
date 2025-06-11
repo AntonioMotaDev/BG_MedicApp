@@ -264,3 +264,81 @@ export async function updatePreHospitalRecordProgress(
     throw new Error('Failed to update progress');
   }
 }
+
+export async function getAllPreHospitalRecords(): Promise<any[]> {
+  try {
+    const preHospitalCollection = collection(db, 'preHospitalRecords');
+    const q = query(preHospitalCollection, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    
+    const records = await Promise.all(
+      snapshot.docs.map(async (docSnap: QueryDocumentSnapshot<DocumentData>) => {
+        const data = docSnap.data();
+        
+        // Get patient information
+        let patientName = 'Paciente no encontrado';
+        try {
+          if (data.patientId) {
+            const patient = await getPatientById(data.patientId);
+            if (patient) {
+              patientName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName}`;
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching patient ${data.patientId}:`, error);
+        }
+        
+        // Calculate completed sections and total sections
+        const completedSections = Array.isArray(data.completedSections) ? data.completedSections : [];
+        const totalSections = 11; // Based on the form structure
+        
+        return {
+          id: docSnap.id,
+          patientId: data.patientId || '',
+          patientName,
+          fecha: data.fecha || '',
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+          status: data.status || 'draft',
+          completedSections,
+          totalSections,
+          prioridad: data.prioridad,
+          lugarOcurrencia: data.lugarOcurrencia,
+          medicoReceptorNombre: data.medicoReceptorNombre,
+          // Include other fields needed for display
+          convenio: data.convenio,
+          episodio: data.episodio,
+          folio: data.folio,
+          solicitadoPor: data.solicitadoPor,
+          horaLlamada: data.horaLlegada, // Assuming this maps to horaLlamada in display
+          horaSalida: data.horaArribo,   // Assuming this maps to horaSalida in display
+          horaLlegada: data.horaLlegada,
+          direccion: data.ubicacion,
+          tipoServicio: data.tipoServicio,
+          antecedentesPatologicos: data.antecedentesPatologicos || [],
+          historiaClinica: data.otraPatologia || data.otroTipoAntecedente,
+          lesiones: data.lesiones || [],
+          medicamentos: data.medicamentos,
+          procedimientos: [
+            ...(data.viaAerea ? ['Vía aérea'] : []),
+            ...(data.canalizacion ? ['Canalización'] : []),
+            ...(data.empaquetamiento ? ['Empaquetamiento'] : []),
+            ...(data.inmovilizacion ? ['Inmovilización'] : []),
+            ...(data.monitor ? ['Monitor'] : []),
+            ...(data.rcpBasica ? ['RCP Básica'] : []),
+            ...(data.mastPna ? ['MAST/PNA'] : []),
+            ...(data.collarinCervical ? ['Collarín Cervical'] : []),
+            ...(data.desfibrilacion ? ['Desfibrilación'] : []),
+            ...(data.apoyoVent ? ['Apoyo Ventilatorio'] : []),
+            ...(data.oxigeno ? [`Oxígeno: ${data.oxigeno}`] : []),
+            ...(data.otroManejo ? [data.otroManejo] : [])
+          ].filter(Boolean),
+        };
+      })
+    );
+    
+    return records;
+  } catch (error) {
+    console.error('Error getting all pre-hospital records:', error);
+    throw new Error('Failed to get all pre-hospital records');
+  }
+}
