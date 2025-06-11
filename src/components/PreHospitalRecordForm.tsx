@@ -225,7 +225,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
 
   const { register, handleSubmit, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
     defaultValues: {
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: '', // Cambiar para que no se inicialice con fecha automática
       antecedentesPatologicos: [],
       lesiones: [],
       viaAerea: false,
@@ -300,14 +300,17 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
     const requiredFilled = config.requiredFields.every(field => {
       const value = formData[field];
       if (Array.isArray(value)) return value.length > 0;
-      return value !== null && value !== undefined && value !== '' && value !== false;
+      return value !== null && value !== undefined && value !== '';
     });
 
-    // Check optional fields
+    // Check optional fields - corregir la lógica para booleanos
     const optionalFilled = config.optionalFields.some(field => {
       const value = formData[field];
       if (Array.isArray(value)) return value.length > 0;
-      if (typeof value === 'boolean') return value === true;
+      if (typeof value === 'boolean') {
+        // Para booleanos, solo considerar como "lleno" si es true
+        return value === true;
+      }
       return value !== null && value !== undefined && value !== '';
     });
 
@@ -348,15 +351,15 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   // Get tab trigger class based on status
   const getTabTriggerClass = (tabId: string): string => {
     const status = tabStatuses[tabId] || 'empty';
-    const baseClasses = "flex flex-col items-center gap-1 p-3 h-auto text-xs transition-colors";
+    const baseClasses = "flex flex-col items-center gap-2 p-3 h-auto text-xs transition-all duration-200 rounded-lg border-2 min-h-[80px] justify-center";
     
     switch (status) {
       case 'completed':
-        return `${baseClasses} bg-green-50 text-green-700 hover:bg-green-100 data-[state=active]:bg-green-100 data-[state=active]:text-green-800`;
+        return `${baseClasses} bg-green-50 text-green-700 border-green-200 hover:bg-green-100 data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300 shadow-sm`;
       case 'partial':
-        return `${baseClasses} bg-yellow-50 text-yellow-700 hover:bg-yellow-100 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800`;
+        return `${baseClasses} bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300 shadow-sm`;
       default:
-        return `${baseClasses} bg-gray-50 text-gray-700 hover:bg-gray-100 data-[state=active]:bg-gray-100 data-[state=active]:text-gray-800`;
+        return `${baseClasses} bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-300 shadow-sm`;
     }
   };
 
@@ -855,7 +858,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
         <CardContent className="p-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="border-b bg-muted/10">
-              <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto p-2 gap-2 bg-transparent w-full">
+              <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 h-auto p-3 gap-1 bg-transparent w-full overflow-x-auto">
                 <TabsTrigger 
                   value="datos-registro" 
                   className={getTabTriggerClass('datos-registro')}
@@ -868,7 +871,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Datos Registro</span>
+                  <span className="text-xs font-medium">Datos Registro</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="datos-captacion" 
@@ -882,7 +885,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Captación</span>
+                  <span className="text-xs font-medium">Captación</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="antecedentes" 
@@ -896,7 +899,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Antecedentes</span>
+                  <span className="text-xs font-medium">Antecedentes</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="lesiones" 
@@ -910,7 +913,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Lesiones</span>
+                  <span className="text-xs font-medium">Lesiones</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="manejo" 
@@ -924,7 +927,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Manejo</span>
+                  <span className="text-xs font-medium">Manejo</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="medicamentos" 
@@ -938,7 +941,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Medicamentos</span>
+                  <span className="text-xs font-medium">Medicamentos</span>
                 </TabsTrigger>
                 {esPacienteFemenino && (
                   <TabsTrigger 
@@ -953,7 +956,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                         </div>
                       )}
                     </div>
-                    <span>Gineco-obstétrica</span>
+                    <span className="text-xs font-medium">Gineco-obstétrica</span>
                   </TabsTrigger>
                 )}
                 <TabsTrigger 
@@ -968,7 +971,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Negativa</span>
+                  <span className="text-xs font-medium">Negativa</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="justificacion-prioridad" 
@@ -982,7 +985,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Prioridad</span>
+                  <span className="text-xs font-medium">Prioridad</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="unidad-medica" 
@@ -996,7 +999,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Unidad Médica</span>
+                  <span className="text-xs font-medium">Unidad Médica</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="medico-receptor" 
@@ -1010,7 +1013,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       </div>
                     )}
                   </div>
-                  <span>Médico Receptor</span>
+                  <span className="text-xs font-medium">Médico Receptor</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1055,6 +1058,13 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                           id="fecha"
                           type="date"
                           {...register('fecha', { required: 'Este campo es requerido' })}
+                          onFocus={(e) => {
+                            // Si el campo está vacío, poner la fecha actual
+                            if (!e.target.value) {
+                              const today = new Date().toISOString().split('T')[0];
+                              setValue('fecha', today);
+                            }
+                          }}
                         />
                         {errors.fecha && (
                           <p className="text-sm text-destructive">{errors.fecha.message}</p>

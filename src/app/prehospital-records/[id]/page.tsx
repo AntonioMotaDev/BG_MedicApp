@@ -34,6 +34,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePdfGenerator } from '@/hooks/usePdfGenerator';
+import { BodyMap } from '@/components/BodyMap';
 
 interface PreHospitalRecord {
   id: string;
@@ -44,62 +45,105 @@ interface PreHospitalRecord {
   status: 'draft' | 'partial' | 'completed';
   completedSections: string[];
   totalSections: number;
-  prioridad?: string;
-  lugarOcurrencia?: string;
-  medicoReceptorNombre?: string;
   // Datos del registro
   convenio?: string;
   episodio?: string;
   folio?: string;
   solicitadoPor?: string;
-  horaLlamada?: string;
-  horaSalida?: string;
+  // Datos de captación
   horaLlegada?: string;
-  direccion?: string;
+  horaArribo?: string;
+  tiempoEspera?: string;
+  horaTermino?: string;
+  ubicacion?: string;
   tipoServicio?: string;
-  // Información del paciente
-  edad?: string;
-  sexo?: string;
-  telefono?: string;
-  // Antecedentes y evaluación
+  otroTipoServicio?: string;
+  lugarOcurrencia?: string;
+  // Antecedentes patológicos
   antecedentesPatologicos?: string[];
-  historiaClinica?: string;
+  otraPatologia?: string;
+  // Antecedentes clínicos
+  tipoAntecedente?: string;
+  otroTipoAntecedente?: string;
+  agenteCasual?: string;
+  cinematica?: string;
+  medidaSeguridad?: string;
+  // Localización de lesiones
   lesiones?: any[];
+  // Manejo
+  viaAerea?: boolean;
+  canalizacion?: boolean;
+  empaquetamiento?: boolean;
+  inmovilizacion?: boolean;
+  monitor?: boolean;
+  rcpBasica?: boolean;
+  mastPna?: boolean;
+  collarinCervical?: boolean;
+  desfibrilacion?: boolean;
+  apoyoVent?: boolean;
+  oxigeno?: string;
+  otroManejo?: string;
+  // Medicamentos
   medicamentos?: string;
-  procedimientos?: string[];
-  // Signos vitales
-  presionArterial?: string;
-  frecuenciaCardiaca?: string;
-  frecuenciaRespiratoria?: string;
-  saturacionOxigeno?: string;
-  temperatura?: string;
-  glucosa?: string;
-  // Evaluación neurológica
-  glasgow?: string;
-  pupilas?: string;
-  // Evaluación física
-  colorPiel?: string;
-  piel?: string;
-  // Sustancias
-  influenciadoPor?: string[];
-  // Tratamiento
-  oxigeno?: boolean;
-  medicamentosAdministrados?: string[];
-  // Traslado
-  trasladoA?: string;
-  acompanante?: string;
-  // Médico receptor
-  medicoReceptorCedula?: string;
-  medicoReceptorEspecialidad?: string;
+  // Urgencias Gineco-obstétricas
+  parto?: boolean;
+  aborto?: boolean;
+  hxVaginal?: boolean;
+  fechaUltimaMenstruacion?: string;
+  semanasGestacion?: string;
+  ruidosCardiacosFetales?: string;
+  expulsionPlacenta?: string;
+  horaExpulsionPlacenta?: string;
+  gesta?: string;
+  partos?: string;
+  cesareas?: string;
+  abortos?: string;
+  metodosAnticonceptivos?: string;
   // Negativa de atención
   negativaAtencion?: boolean;
-  motivoNegativa?: string;
   firmaPaciente?: string;
   firmaTestigo?: string;
-  // Observaciones
+  // Justificación de prioridad
+  prioridad?: string;
+  pupilas?: string;
+  colorPiel?: string;
+  piel?: string;
+  temperatura?: string;
+  influenciadoPor?: string[];
+  otroInfluencia?: string;
+  // Unidad Médica que Recibe
+  lugarOrigen?: string;
+  lugarConsulta?: string;
+  lugarDestino?: string;
+  ambulanciaNumero?: string;
+  ambulanciaPlacas?: string;
+  personal?: string;
+  doctor?: string;
+  // Médico receptor
+  medicoReceptorNombre?: string;
+  medicoReceptorFirma?: string;
+  horaEntrega?: string;
+  // Para mantener compatibilidad temporal
+  motivoNegativa?: string;
   observaciones?: string;
   observacionesAdicionales?: string;
+  // Campos derivados para procedimientos
+  procedimientos?: string[];
 }
+
+// Copio los colores de lesión aquí para usarlos en la lista:
+const lesionColors: Record<string, string> = {
+  '1': '#ef4444', // Hemorragia
+  '2': '#8b5cf6', // Herida
+  '3': '#3b82f6', // Contusión
+  '4': '#f59e0b', // Fractura
+  '5': '#10b981', // Luxación/Esguince
+  '6': '#6b7280', // Objeto extraño
+  '7': '#dc2626', // Quemadura
+  '8': '#059669', // Picadura/Mordedura
+  '9': '#7c3aed', // Edema/Hematoma
+  '10': '#1f2937', // Otro
+};
 
 export default function PreHospitalRecordDetailPage() {
   const params = useParams();
@@ -107,6 +151,7 @@ export default function PreHospitalRecordDetailPage() {
   const [record, setRecord] = useState<PreHospitalRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const { generatePdf } = usePdfGenerator();
+  const [side, setSide] = useState<'front' | 'back'>('front');
 
   useEffect(() => {
     loadRecord();
@@ -373,23 +418,11 @@ export default function PreHospitalRecordDetailPage() {
                   <span className="text-muted-foreground font-medium">Nombre completo:</span>
                   <span className="font-medium break-words">{displayValue(record.patientName)}</span>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Edad:</span>
-                  <span className="break-words">{displayValue(record.edad)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Sexo:</span>
-                  <span className="break-words">{displayValue(record.sexo)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Teléfono:</span>
-                  <span className="break-words">{displayValue(record.telefono)}</span>
-                </div>
               </div>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-3">Datos Administrativos</h3>
+              <h3 className="font-semibold mb-3">Datos del Registro</h3>
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <span className="text-muted-foreground font-medium">Convenio:</span>
@@ -404,8 +437,8 @@ export default function PreHospitalRecordDetailPage() {
                   <span className="break-words">{displayValue(record.folio)}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Prioridad médica:</span>
-                  <div>{getPriorityBadge(record.prioridad)}</div>
+                  <span className="text-muted-foreground font-medium">Solicitado por:</span>
+                  <span className="break-words">{displayValue(record.solicitadoPor)}</span>
                 </div>
               </div>
             </div>
@@ -417,8 +450,8 @@ export default function PreHospitalRecordDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Datos de Captación y Servicio
+            <Clock className="h-5 w-5" />
+            Datos de Captación
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -427,107 +460,44 @@ export default function PreHospitalRecordDetailPage() {
               <h3 className="font-semibold mb-3">Horarios del Servicio</h3>
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Hora de llamada:</span>
-                  <span className="break-words">{displayValue(record.horaLlamada)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Hora de salida:</span>
-                  <span className="break-words">{displayValue(record.horaSalida)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <span className="text-muted-foreground font-medium">Hora de llegada:</span>
                   <span className="break-words">{displayValue(record.horaLlegada)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Hora de arribo:</span>
+                  <span className="break-words">{displayValue(record.horaArribo)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Tiempo de espera:</span>
+                  <span className="break-words">{displayValue(record.tiempoEspera)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Hora de término:</span>
+                  <span className="break-words">{displayValue(record.horaTermino)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-3">Ubicación y Servicio</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Ubicación:</span>
+                  <span className="break-words">{displayValue(record.ubicacion)}</span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <span className="text-muted-foreground font-medium">Tipo de servicio:</span>
                   <span className="break-words">{displayValue(record.tipoServicio)}</span>
                 </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Ubicación y Solicitud</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Dirección:</span>
-                  <span className="break-words">{displayValue(record.direccion)}</span>
-                </div>
+                {record.otroTipoServicio && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
+                    <span className="break-words">{record.otroTipoServicio}</span>
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <span className="text-muted-foreground font-medium">Lugar de ocurrencia:</span>
                   <span className="break-words">{displayValue(record.lugarOcurrencia)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Solicitado por:</span>
-                  <span className="break-words">{displayValue(record.solicitadoPor)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Signos vitales - Completos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5" />
-            Signos Vitales y Evaluación Física
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Signos Vitales</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Presión arterial:</span>
-                  <span className="break-words">{displayValue(record.presionArterial)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Frecuencia cardíaca:</span>
-                  <span className="break-words">{displayValue(record.frecuenciaCardiaca)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Frecuencia respiratoria:</span>
-                  <span className="break-words">{displayValue(record.frecuenciaRespiratoria)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Saturación de oxígeno:</span>
-                  <span className="break-words">{displayValue(record.saturacionOxigeno)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Temperatura:</span>
-                  <span className="break-words">{displayValue(record.temperatura)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Glucosa:</span>
-                  <span className="break-words">{displayValue(record.glucosa)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Evaluación Física</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Escala de Glasgow:</span>
-                  <span className="break-words">{displayValue(record.glasgow)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Pupilas:</span>
-                  <span className="break-words">{displayValue(record.pupilas)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Color de piel:</span>
-                  <span className="break-words">{displayValue(record.colorPiel)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Condición de piel:</span>
-                  <span className="break-words">{displayValue(record.piel)}</span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Influenciado por:</span>
-                  <span className="break-words">{displayValue(record.influenciadoPor)}</span>
                 </div>
               </div>
             </div>
@@ -539,12 +509,12 @@ export default function PreHospitalRecordDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5" />
-            Antecedentes Médicos e Historia Clínica
+            <FileText className="h-5 w-5" />
+            Antecedentes Médicos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <h3 className="font-semibold mb-3">Antecedentes Patológicos</h3>
               {record.antecedentesPatologicos && record.antecedentesPatologicos.length > 0 ? (
@@ -558,144 +528,264 @@ export default function PreHospitalRecordDetailPage() {
               ) : (
                 <p className="text-muted-foreground">No se han registrado antecedentes patológicos</p>
               )}
+              {record.otraPatologia && (
+                <div className="mt-3">
+                  <span className="text-muted-foreground font-medium">Otra patología especificada: </span>
+                  <span className="break-words">{record.otraPatologia}</span>
+                </div>
+              )}
             </div>
             
             <Separator />
             
             <div>
-              <h3 className="font-semibold mb-3">Historia Clínica</h3>
-              <p className="text-sm break-words">
-                {displayValue(record.historiaClinica, "No se ha registrado historia clínica")}
-              </p>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h3 className="font-semibold mb-3">Observaciones Médicas</h3>
-              <p className="text-sm break-words">
-                {displayValue(record.observaciones, "No se han registrado observaciones")}
-              </p>
+              <h3 className="font-semibold mb-3">Antecedentes Clínicos</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Tipo de antecedente:</span>
+                  <span className="break-words">{displayValue(record.tipoAntecedente)}</span>
+                </div>
+                {record.otroTipoAntecedente && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
+                    <span className="break-words">{record.otroTipoAntecedente}</span>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Agente casual:</span>
+                  <span className="break-words">{displayValue(record.agenteCasual)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Cinemática:</span>
+                  <span className="break-words">{displayValue(record.cinematica)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Medida de seguridad:</span>
+                  <span className="break-words">{displayValue(record.medidaSeguridad)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Procedimientos y medicamentos - Completos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Procedimientos Realizados
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {record.procedimientos && record.procedimientos.length > 0 ? (
-              <ul className="space-y-2">
-                {record.procedimientos.map((procedimiento, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                    <span className="text-sm break-words">{procedimiento}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground">No se han registrado procedimientos</p>
-            )}
-            
-            <Separator className="my-4" />
-            
-            <div>
-              <h4 className="font-semibold mb-2">Oxígeno administrado</h4>
-              <p className="text-sm">
-                {record.oxigeno ? "Sí" : "No especificado"}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Localización de lesiones */}
+      <Card className="border bg-white/80 shadow-none rounded-xl p-4">
+        <CardHeader className="pb-2 border-none bg-transparent">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Activity className="h-5 w-5" />
+            Localización de Lesiones
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center gap-4">
+          {record.lesiones && record.lesiones.length > 0 ? (
+            <>
+              <BodyMap
+                lesions={record.lesiones}
+                side={side}
+                onSideChange={setSide}
+                showSwitch={true}
+              />
+              <div className="w-full mt-2">
+                <ul className="space-y-1">
+                  {record.lesiones.map((lesion: any, index: number) => (
+                    <li key={index} className="text-xs text-gray-700 flex gap-2 items-center">
+                      <span className="inline-block w-2 h-2 rounded-full" style={{background: lesionColors[lesion.type] || '#333'}}></span>
+                      <span>Lesión {index + 1}:</span>
+                      <span className="font-medium">Tipo {lesion.type}</span>
+                      <span>- {lesion.side === 'front' ? 'Anverso' : 'Reverso'}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">No se han registrado lesiones</p>
+          )}
+        </CardContent>
+      </Card>
 
+      {/* Manejo y procedimientos - Completos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Heart className="h-5 w-5" />
+            Manejo y Procedimientos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-semibold mb-3">Procedimientos Realizados</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.viaAerea ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Vía aérea</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.canalizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Canalización</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.empaquetamiento ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Empaquetamiento</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.inmovilizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Inmovilización</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.monitor ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Monitor</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.rcpBasica ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">RCP Básica</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.mastPna ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">MAST o PNA</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.collarinCervical ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Collarín Cervical</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.desfibrilacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Desfibrilación</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${record.apoyoVent ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span className="text-sm">Apoyo Vent.</span>
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-muted-foreground font-medium">Oxígeno (L/min):</span>
+                <span className="break-words">{displayValue(record.oxigeno)}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-muted-foreground font-medium">Otro manejo:</span>
+                <span className="break-words">{displayValue(record.otroManejo)}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Medicamentos */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Pill className="h-5 w-5" />
+            Medicamentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <h4 className="font-semibold mb-2">Medicamentos administrados</h4>
+            <p className="text-sm break-words">
+              {displayValue(record.medicamentos, "No se han administrado medicamentos")}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Urgencias Gineco-obstétricas - Solo si hay datos */}
+      {(record.parto || record.aborto || record.hxVaginal || record.fechaUltimaMenstruacion || 
+        record.semanasGestacion || record.ruidosCardiacosFetales || record.expulsionPlacenta ||
+        record.horaExpulsionPlacenta || record.gesta || record.partos || record.cesareas ||
+        record.abortos || record.metodosAnticonceptivos) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Pill className="h-5 w-5" />
-              Medicamentos y Tratamiento
+              <User className="h-5 w-5" />
+              Urgencias Gineco-obstétricas
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <h4 className="font-semibold mb-2">Medicamentos administrados</h4>
-                <p className="text-sm break-words">
-                  {displayValue(record.medicamentos, "No se han administrado medicamentos")}
-                </p>
+                <h3 className="font-semibold mb-3">Condiciones</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.parto ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Parto</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.aborto ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Aborto</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.hxVaginal ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Hx. Vaginal</span>
+                  </div>
+                </div>
               </div>
               
               <Separator />
               
-              <div>
-                <h4 className="font-semibold mb-2">Lista de medicamentos</h4>
-                {record.medicamentosAdministrados && record.medicamentosAdministrados.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {record.medicamentosAdministrados.map((medicamento, index) => (
-                      <Badge key={index} variant="outline">
-                        {medicamento}
-                      </Badge>
-                    ))}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold mb-3">Información Ginecológica</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Fecha última menstruación:</span>
+                      <span className="break-words">{displayValue(record.fechaUltimaMenstruacion)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Semanas de gestación:</span>
+                      <span className="break-words">{displayValue(record.semanasGestacion)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Ruidos cardíacos fetales:</span>
+                      <span className="break-words">{displayValue(record.ruidosCardiacosFetales)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Expulsión placenta:</span>
+                      <span className="break-words">{displayValue(record.expulsionPlacenta)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Hora expulsión placenta:</span>
+                      <span className="break-words">{displayValue(record.horaExpulsionPlacenta)}</span>
+                    </div>
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No se han registrado medicamentos específicos</p>
-                )}
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold mb-3">Historia Obstétrica</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Gesta:</span>
+                      <span className="break-words">{displayValue(record.gesta)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Partos:</span>
+                      <span className="break-words">{displayValue(record.partos)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Cesáreas:</span>
+                      <span className="break-words">{displayValue(record.cesareas)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Abortos:</span>
+                      <span className="break-words">{displayValue(record.abortos)}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground font-medium">Métodos anticonceptivos:</span>
+                      <span className="break-words">{displayValue(record.metodosAnticonceptivos)}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Traslado y médico receptor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5" />
-            Traslado y Médico Receptor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Información de Traslado</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Trasladado a:</span>
-                  <span className="break-words">{displayValue(record.trasladoA)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Acompañante:</span>
-                  <span className="break-words">{displayValue(record.acompanante)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Médico Receptor</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Nombre:</span>
-                  <span className="break-words">{displayValue(record.medicoReceptorNombre, "No asignado")}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Cédula profesional:</span>
-                  <span className="break-words">{displayValue(record.medicoReceptorCedula)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Especialidad:</span>
-                  <span className="break-words">{displayValue(record.medicoReceptorEspecialidad)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      )}
 
       {/* Negativa de atención */}
       <Card>
@@ -706,32 +796,20 @@ export default function PreHospitalRecordDetailPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Estado de la Atención</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
-                  <span className="break-words">
-                    {record.negativaAtencion ? (
-                      <Badge variant="destructive">Sí</Badge>
-                    ) : (
-                      <Badge variant="secondary">No</Badge>
-                    )}
-                  </span>
-                </div>
-                {record.negativaAtencion && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-muted-foreground font-medium">Motivo de la negativa:</span>
-                    <span className="break-words">{displayValue(record.motivoNegativa)}</span>
-                  </div>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
+              <span className="break-words">
+                {record.negativaAtencion ? (
+                  <Badge variant="destructive">Sí</Badge>
+                ) : (
+                  <Badge variant="secondary">No</Badge>
                 )}
-              </div>
+              </span>
             </div>
             
-            <div>
-              <h3 className="font-semibold mb-3">Firmas</h3>
-              <div className="space-y-3">
+            {record.negativaAtencion && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
                   <span className="text-muted-foreground font-medium">Firma del paciente:</span>
                   <span className="break-words">{displayValue(record.firmaPaciente)}</span>
@@ -741,27 +819,189 @@ export default function PreHospitalRecordDetailPage() {
                   <span className="break-words">{displayValue(record.firmaTestigo)}</span>
                 </div>
               </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Justificación de prioridad */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Justificación de Prioridad
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-3">Prioridad Médica</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Prioridad:</span>
+                  <div>{getPriorityBadge(record.prioridad)}</div>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Pupilas:</span>
+                  <span className="break-words">{displayValue(record.pupilas)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Color de piel:</span>
+                  <span className="break-words">{displayValue(record.colorPiel)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Piel:</span>
+                  <span className="break-words">{displayValue(record.piel)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Temperatura:</span>
+                  <span className="break-words">{displayValue(record.temperatura)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-3">Influencias</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground font-medium">Influenciado por:</span>
+                  {record.influenciadoPor && record.influenciadoPor.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {record.influenciadoPor.map((influencia, index) => (
+                        <Badge key={index} variant="outline">
+                          {influencia}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">No especificado</span>
+                  )}
+                </div>
+                {record.otroInfluencia && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Otra influencia especificada:</span>
+                    <span className="break-words">{record.otroInfluencia}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Observaciones adicionales */}
+      {/* Unidad médica que recibe */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Observaciones Adicionales
+            <MapPin className="h-5 w-5" />
+            Unidad Médica que Recibe
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div>
-            <p className="text-sm break-words">
-              {displayValue(record.observacionesAdicionales, "No se han registrado observaciones adicionales")}
-            </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-3">Lugares</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Lugar de origen:</span>
+                  <span className="break-words">{displayValue(record.lugarOrigen)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Lugar de consulta:</span>
+                  <span className="break-words">{displayValue(record.lugarConsulta)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Lugar de destino:</span>
+                  <span className="break-words">{displayValue(record.lugarDestino)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-3">Ambulancia y Personal</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Ambulancia número:</span>
+                  <span className="break-words">{displayValue(record.ambulanciaNumero)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Placas de ambulancia:</span>
+                  <span className="break-words">{displayValue(record.ambulanciaPlacas)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Personal:</span>
+                  <span className="break-words">{displayValue(record.personal)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Doctor:</span>
+                  <span className="break-words">{displayValue(record.doctor)}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Médico receptor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserCheck className="h-5 w-5" />
+            Médico Receptor
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span className="text-muted-foreground font-medium">Nombre del médico:</span>
+              <span className="break-words">{displayValue(record.medicoReceptorNombre, "No asignado")}</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+              <span className="text-muted-foreground font-medium">Hora de entrega:</span>
+              <span className="break-words">{displayValue(record.horaEntrega)}</span>
+            </div>
+            {record.medicoReceptorFirma && (
+              <div className="md:col-span-2">
+                <span className="text-muted-foreground font-medium">Firma del médico:</span>
+                <div className="mt-2 border rounded p-2 bg-gray-50">
+                  <span className="text-sm">Firma digital registrada</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Observaciones adicionales - Solo si hay */}
+      {(record.observaciones || record.observacionesAdicionales) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Observaciones
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {record.observaciones && (
+                <div>
+                  <h4 className="font-semibold mb-2">Observaciones médicas</h4>
+                  <p className="text-sm break-words">{record.observaciones}</p>
+                </div>
+              )}
+              {record.observacionesAdicionales && (
+                <>
+                  {record.observaciones && <Separator />}
+                  <div>
+                    <h4 className="font-semibold mb-2">Observaciones adicionales</h4>
+                    <p className="text-sm break-words">{record.observacionesAdicionales}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 } 
