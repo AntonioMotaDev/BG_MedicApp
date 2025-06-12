@@ -26,11 +26,25 @@ export async function GET(
     
     // Get patient information if patientId exists
     let patientName = 'Paciente no encontrado';
+    let patientData = null;
     if (record.patientId) {
       try {
         const patient = await getPatientById(record.patientId);
         if (patient) {
           patientName = `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName}`;
+          patientData = {
+            age: patient.age,
+            sex: patient.sex,
+            phone: patient.phone,
+            responsiblePerson: patient.responsiblePerson,
+            emergencyContact: patient.emergencyContact,
+            street: patient.street,
+            exteriorNumber: patient.exteriorNumber,
+            interiorNumber: patient.interiorNumber,
+            neighborhood: patient.neighborhood,
+            city: patient.city,
+            insurance: patient.insurance
+          };
         }
       } catch (error) {
         console.error(`Error fetching patient ${record.patientId}:`, error);
@@ -45,6 +59,7 @@ export async function GET(
     const formattedRecord = {
       ...record,
       patientName,
+      patient: patientData,
       completedSections,
       totalSections,
       // Map some fields for display consistency

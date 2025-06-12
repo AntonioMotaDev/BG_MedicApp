@@ -40,6 +40,21 @@ interface PreHospitalRecord {
   id: string;
   patientId: string;
   patientName: string;
+  patient?: {
+    age?: number;
+    sex?: string;
+    phone?: string;
+    responsiblePerson?: string;
+    emergencyContact?: string;
+    street?: string;
+    exteriorNumber?: string;
+    interiorNumber?: string;
+    neighborhood?: string;
+    city?: string;
+    insurance?: string;
+    
+    
+  };
   fecha: string;
   createdAt: string;
   status: 'draft' | 'partial' | 'completed';
@@ -195,7 +210,7 @@ export default function PreHospitalRecordDetailPage() {
   };
 
   const getPriorityBadge = (priority?: string) => {
-    if (!priority) return <span className="text-muted-foreground">No especificado</span>;
+    if (!priority) return <span className="text-muted-foreground">-</span>;
     
     const priorityConfig = {
       rojo: { label: 'Rojo - Crítico', color: 'bg-red-500' },
@@ -205,7 +220,7 @@ export default function PreHospitalRecordDetailPage() {
     };
     
     const config = priorityConfig[priority as keyof typeof priorityConfig];
-    if (!config) return <span className="text-muted-foreground">No especificado</span>;
+    if (!config) return <span className="text-muted-foreground">-</span>;
     
     return (
       <div className="flex items-center gap-2">
@@ -239,8 +254,8 @@ export default function PreHospitalRecordDetailPage() {
   };
 
   // Helper function para mostrar valores con fallback
-  const displayValue = (value: any, fallback: string = "No especificado") => {
-    if (Array.isArray(value)) {
+  const displayValue = (value: any, fallback: string = "-") => {
+    if (Array.isArray(value)) { 
       return value.length > 0 ? value.join(', ') : fallback;
     }
     return value || fallback;
@@ -291,9 +306,9 @@ export default function PreHospitalRecordDetailPage() {
             Volver
           </Button>
           <div className="min-w-0">
-            <h1 className="text-2xl lg:text-3xl font-bold">Registro Prehospitalario</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold">{record.patientName}</h1>
             <p className="text-muted-foreground text-sm lg:text-base truncate">
-              Registro ID: {record.id} - {record.patientName}
+              Registro ID: {record.id}
             </p>
           </div>
         </div>
@@ -353,10 +368,10 @@ export default function PreHospitalRecordDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-2">
+            <div className="col-span-3 space-y-2">
               <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Progreso del registro</span>
+                <Activity className="h-4 w-4 text-sm text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Progreso: {getProgressPercentage(record.completedSections.length, record.totalSections)}% completado</p>
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -372,56 +387,30 @@ export default function PreHospitalRecordDetailPage() {
                     {record.completedSections.length}/{record.totalSections}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {getProgressPercentage(record.completedSections.length, record.totalSections)}% completado
-                </p>
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-6">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Fecha de atención</span>
+                <span className="font-medium">Atendido el</span>
               </div>
-              <p className="text-lg">
-                {record.fecha ? format(new Date(record.fecha), 'dd/MM/yyyy', { locale: es }) : 'No especificado'}
+              <p className="text-sm text-muted-foreground">
+                {record.fecha ? format(new Date(record.fecha), 'dd/MM/yyyy', { locale: es }) : '-'}
               </p>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Fecha de creación</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                {record.createdAt ? format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm', { locale: es }) : 'No especificado'}
+                {record.createdAt ? format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm', { locale: es }) : '-'}
               </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Información del paciente - Completa */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Información del Paciente
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Datos Personales</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Nombre completo:</span>
-                  <span className="font-medium break-words">{displayValue(record.patientName)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
+            <div className="col-span-3 space-y-2">
               <h3 className="font-semibold mb-3">Datos del Registro</h3>
               <div className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
@@ -442,6 +431,73 @@ export default function PreHospitalRecordDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Información del paciente - Completa */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Información del Paciente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-3">Datos Personales</h3>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Nombre:</span>
+                  <span className="font-medium break-words">{displayValue(record.patientName)}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Edad:</span>
+                  <span className="break-words">{record.patient?.age || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Sexo:</span>
+                  <span className="break-words">{record.patient?.sex || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Teléfono:</span>
+                  <span className="break-words">{record.patient?.phone || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Persona responsable:</span>
+                  <span className="break-words">{record.patient?.responsiblePerson || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Calle:</span>
+                  <span className="break-words">{record.patient?.street || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Número exterior:</span>
+                  <span className="break-words">{record.patient?.exteriorNumber || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Número interior:</span>
+                  <span className="break-words">{record.patient?.interiorNumber || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Colonia:</span>
+                  <span className="break-words">{record.patient?.neighborhood || '-'}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                  <span className="text-muted-foreground font-medium">Ciudad:</span>
+                  <span className="break-words">{record.patient?.city || '-'}</span>
+                </div>
+                
+                {record.patient?.emergencyContact && (
+                  <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                    <span className="text-muted-foreground font-medium">Contacto de emergencia:</span>
+                    <span className="break-words">{record.patient.emergencyContact}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
           </div>
         </CardContent>
       </Card>
@@ -788,41 +844,47 @@ export default function PreHospitalRecordDetailPage() {
       )}
 
       {/* Negativa de atención */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <XCircle className="h-5 w-5" />
-            Negativa de Atención
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-              <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
-              <span className="break-words">
-                {record.negativaAtencion ? (
-                  <Badge variant="destructive">Sí</Badge>
-                ) : (
-                  <Badge variant="secondary">No</Badge>
-                )}
-              </span>
-            </div>
-            
-            {record.negativaAtencion && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Firma del paciente:</span>
-                  <span className="break-words">{displayValue(record.firmaPaciente)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Firma del testigo:</span>
-                  <span className="break-words">{displayValue(record.firmaTestigo)}</span>
-                </div>
+      {(record.negativaAtencion || record.firmaPaciente || record.firmaTestigo) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5" />
+              Negativa de Atención
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
+                <span className="break-words">
+                  {record.negativaAtencion ? (
+                    <Badge variant="destructive">Sí</Badge>
+                  ) : (
+                    <Badge variant="secondary">No</Badge>
+                  )}
+                </span>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              
+              {(record.firmaPaciente || record.firmaTestigo) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {record.firmaPaciente && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Firma del paciente:</span>
+                      <span className="break-words">{displayValue(record.firmaPaciente)}</span>
+                    </div>
+                  )}
+                  {record.firmaTestigo && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Firma del testigo:</span>
+                      <span className="break-words">{displayValue(record.firmaTestigo)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Justificación de prioridad */}
       <Card>
@@ -874,7 +936,7 @@ export default function PreHospitalRecordDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">No especificado</span>
+                    <span className="text-muted-foreground">-</span>
                   )}
                 </div>
                 {record.otroInfluencia && (
@@ -964,7 +1026,11 @@ export default function PreHospitalRecordDetailPage() {
               <div className="md:col-span-2">
                 <span className="text-muted-foreground font-medium">Firma del médico:</span>
                 <div className="mt-2 border rounded p-2 bg-gray-50">
-                  <span className="text-sm">Firma digital registrada</span>
+                  <img 
+                    src={record.medicoReceptorFirma} 
+                    alt="Firma del médico receptor" 
+                    className="max-w-[200px] h-auto"
+                  />
                 </div>
               </div>
             )}
