@@ -23,7 +23,9 @@ import {
   Pill,
   AlertTriangle,
   UserCheck,
-  XCircle
+  XCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -167,6 +169,28 @@ export default function PreHospitalRecordDetailPage() {
   const [loading, setLoading] = useState(true);
   const { generatePdf } = usePdfGenerator();
   const [side, setSide] = useState<'front' | 'back'>('front');
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({
+    estado: true,
+    paciente: true,
+    captacion: true,
+    antecedentes: true,
+    lesiones: true,
+    manejo: true,
+    medicamentos: true,
+    gineco: true,
+    negativa: true,
+    prioridad: true,
+    unidad: true,
+    medico: true,
+    observaciones: true
+  });
+
+  const toggleCard = (cardId: string) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [cardId]: !prev[cardId]
+    }));
+  };
 
   useEffect(() => {
     loadRecord();
@@ -308,7 +332,7 @@ export default function PreHospitalRecordDetailPage() {
           <div className="min-w-0">
             <h1 className="text-2xl lg:text-3xl font-bold">{record.patientName}</h1>
             <p className="text-muted-foreground text-sm lg:text-base truncate">
-              Registro ID: {record.id}
+              Registro de atención prehospitalaria
             </p>
           </div>
         </div>
@@ -358,271 +382,311 @@ export default function PreHospitalRecordDetailPage() {
         </div>
       </div>
 
-      {/* Estado y progreso - Responsive */}
+      {/* Estado y progreso */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <span>Estado del Registro</span>
-            {getStatusBadge(record.status)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="col-span-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-sm text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">Progreso: {getProgressPercentage(record.completedSections.length, record.totalSections)}% completado</p>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-blue-500 h-3 rounded-full transition-all"
-                      style={{ 
-                        width: `${getProgressPercentage(record.completedSections.length, record.totalSections)}%` 
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {record.completedSections.length}/{record.totalSections}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Atendido el</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {record.fecha ? format(new Date(record.fecha), 'dd/MM/yyyy', { locale: es }) : '-'}
-              </p>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Fecha de creación</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {record.createdAt ? format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm', { locale: es }) : '-'}
-              </p>
-            </div>
-
-            <div className="col-span-3 space-y-2">
-              <h3 className="font-semibold mb-3">Datos del Registro</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Convenio:</span>
-                  <span className="break-words">{displayValue(record.convenio)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Episodio:</span>
-                  <span className="break-words">{displayValue(record.episodio)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Folio:</span>
-                  <span className="break-words">{displayValue(record.folio)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Solicitado por:</span>
-                  <span className="break-words">{displayValue(record.solicitadoPor)}</span>
-                </div>
-              </div>
-            </div>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('estado')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Estado del Registro
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.estado ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
           </div>
-        </CardContent>
+        </CardHeader>
+        {expandedCards.estado && (
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="col-span-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-sm text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">Progreso: {getProgressPercentage(record.completedSections.length, record.totalSections)}% completado</p>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-blue-500 h-3 rounded-full transition-all"
+                        style={{ 
+                          width: `${getProgressPercentage(record.completedSections.length, record.totalSections)}%` 
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {record.completedSections.length}/{record.totalSections}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Atendido el</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {record.fecha ? format(new Date(record.fecha), 'dd/MM/yyyy', { locale: es }) : '-'}
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Fecha de creación</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {record.createdAt ? format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm', { locale: es }) : '-'}
+                </p>
+              </div>
+
+              <div className="col-span-3 space-y-2">
+                <h3 className="font-semibold mb-3">Datos del Registro</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Convenio:</span>
+                    <span className="break-words">{displayValue(record.convenio)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Episodio:</span>
+                    <span className="break-words">{displayValue(record.episodio)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Folio:</span>
+                    <span className="break-words">{displayValue(record.folio)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Solicitado por:</span>
+                    <span className="break-words">{displayValue(record.solicitadoPor)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
-      {/* Información del paciente - Completa */}
+      {/* Información del paciente */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Información del Paciente
-          </CardTitle>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('paciente')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Información del Paciente
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.paciente ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Datos Personales</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Nombre:</span>
-                  <span className="font-medium break-words">{displayValue(record.patientName)}</span>
+        {expandedCards.paciente && (
+          <CardContent>
+            <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
+              <div className="col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Datos Personales</h3>
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Nombre:</span>
+                        <span className="font-medium break-words">{displayValue(record.patientName)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Edad:</span>
+                        <span className="break-words">{record.patient?.age || '-'}</span>
+                        <span className="text-muted-foreground font-medium ml-4">Sexo:</span>
+                        <span className="break-words">{record.patient?.sex || '-'}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Persona responsable:</span>
+                        <span className="break-words">{record.patient?.responsiblePerson || '-'}</span>
+                      </div>
+                      
+                      {record.patient?.emergencyContact && (
+                        <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                          <span className="text-muted-foreground font-medium">Contacto de emergencia:</span>
+                          <span className="break-words">{record.patient.emergencyContact}</span>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Medicamentos administrados:</span>
+                        <span className="break-words">{displayValue(record.medicamentos, "No se han administrado medicamentos")}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-3">Dirección</h3>
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="break-words">{record.patient?.street || '-'}</span>
+                        <span className="break-words">{record.patient?.exteriorNumber || '-'} - </span>
+                        <span className="break-words">{record.patient?.interiorNumber || ''} , </span>
+                        <span className="break-words">{record.patient?.neighborhood || '-'}, </span>
+                        <span className="break-words">{record.patient?.city || '-'}</span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Teléfono:</span>
+                        <span className="break-words">{record.patient?.phone || '-'}</span>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
+                        <span className="text-muted-foreground font-medium">Derechohabiencia:</span>
+                        <span className="break-words">{record.patient?.insurance || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Edad:</span>
-                  <span className="break-words">{record.patient?.age || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Sexo:</span>
-                  <span className="break-words">{record.patient?.sex || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Teléfono:</span>
-                  <span className="break-words">{record.patient?.phone || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Persona responsable:</span>
-                  <span className="break-words">{record.patient?.responsiblePerson || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Calle:</span>
-                  <span className="break-words">{record.patient?.street || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Número exterior:</span>
-                  <span className="break-words">{record.patient?.exteriorNumber || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Número interior:</span>
-                  <span className="break-words">{record.patient?.interiorNumber || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Colonia:</span>
-                  <span className="break-words">{record.patient?.neighborhood || '-'}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                  <span className="text-muted-foreground font-medium">Ciudad:</span>
-                  <span className="break-words">{record.patient?.city || '-'}</span>
+              </div>
+
+              
+            </div>
+
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Datos de captación */}
+      <Card>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('captacion')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Datos de Captación
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.captacion ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+        </CardHeader>
+        {expandedCards.captacion && (
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="font-semibold mb-3">Horarios del Servicio</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Hora de llegada:</span>
+                      <span className="break-words">{displayValue(record.horaLlegada)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Hora de arribo:</span>
+                      <span className="break-words">{displayValue(record.horaArribo)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Tiempo de espera:</span>
+                      <span className="break-words">{displayValue(record.tiempoEspera)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Hora de término:</span>
+                      <span className="break-words">{displayValue(record.horaTermino)}</span>
+                    </div>
+                  </div>
                 </div>
                 
-                {record.patient?.emergencyContact && (
-                  <div className="flex flex-col sm:flex-row sm:justify-start gap-1">
-                    <span className="text-muted-foreground font-medium">Contacto de emergencia:</span>
-                    <span className="break-words">{record.patient.emergencyContact}</span>
+                <div>
+                  <h3 className="font-semibold mb-3">Ubicación y Servicio</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-muted-foreground font-medium">Ubicación:</span>
+                      <span className="break-words">{displayValue(record.ubicacion)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Tipo de servicio:</span>
+                      <span className="break-words">{displayValue(record.tipoServicio)}</span>
+                    </div>
+                    {record.otroTipoServicio && (
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
+                        <span className="break-words">{record.otroTipoServicio}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Lugar de ocurrencia:</span>
+                      <span className="break-words">{displayValue(record.lugarOcurrencia)}</span>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             </div>
-            
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
-      {/* Datos de captación - Completos */}
+      {/* Antecedentes médicos */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Datos de Captación
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Horarios del Servicio</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Hora de llegada:</span>
-                  <span className="break-words">{displayValue(record.horaLlegada)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Hora de arribo:</span>
-                  <span className="break-words">{displayValue(record.horaArribo)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Tiempo de espera:</span>
-                  <span className="break-words">{displayValue(record.tiempoEspera)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Hora de término:</span>
-                  <span className="break-words">{displayValue(record.horaTermino)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Ubicación y Servicio</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Ubicación:</span>
-                  <span className="break-words">{displayValue(record.ubicacion)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Tipo de servicio:</span>
-                  <span className="break-words">{displayValue(record.tipoServicio)}</span>
-                </div>
-                {record.otroTipoServicio && (
-                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                    <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
-                    <span className="break-words">{record.otroTipoServicio}</span>
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Lugar de ocurrencia:</span>
-                  <span className="break-words">{displayValue(record.lugarOcurrencia)}</span>
-                </div>
-              </div>
-            </div>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('antecedentes')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Antecedentes Médicos
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.antecedentes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </CardHeader>
+        {expandedCards.antecedentes && (
+          <CardContent>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Antecedentes Clínicos */}
+                <div>
+                  <h3 className="font-semibold mb-3">Antecedentes Clínicos</h3>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Tipo de antecedente:</span>
+                      <span className="break-words">{displayValue(record.tipoAntecedente)}</span>
+                    </div>
+                    {record.otroTipoAntecedente && (
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
+                        <span className="break-words">{record.otroTipoAntecedente}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Agente casual:</span>
+                      <span className="break-words">{displayValue(record.agenteCasual)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Cinemática:</span>
+                      <span className="break-words">{displayValue(record.cinematica)}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Medida de seguridad:</span>
+                      <span className="break-words">{displayValue(record.medidaSeguridad)}</span>
+                    </div>
+                  </div>
+                </div>
 
-      {/* Antecedentes médicos - Completos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Antecedentes Médicos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3">Antecedentes Patológicos</h3>
-              {record.antecedentesPatologicos && record.antecedentesPatologicos.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {record.antecedentesPatologicos.map((antecedente, index) => (
-                    <Badge key={index} variant="secondary">
-                      {antecedente}
-                    </Badge>
-                  ))}
+                <div>
+                  <h3 className="font-semibold mb-3">Antecedentes Patológicos</h3>
+                  {record.antecedentesPatologicos && record.antecedentesPatologicos.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {record.antecedentesPatologicos.map((antecedente, index) => (
+                        <Badge key={index} variant="secondary">
+                          {antecedente}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No se han registrado antecedentes patológicos</p>
+                  )}
+                  {record.otraPatologia && (
+                    <div className="mt-3">
+                      <span className="text-muted-foreground font-medium">Otra patología especificada: </span>
+                      <span className="break-words">{record.otraPatologia}</span>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-muted-foreground">No se han registrado antecedentes patológicos</p>
-              )}
-              {record.otraPatologia && (
-                <div className="mt-3">
-                  <span className="text-muted-foreground font-medium">Otra patología especificada: </span>
-                  <span className="break-words">{record.otraPatologia}</span>
-                </div>
-              )}
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h3 className="font-semibold mb-3">Antecedentes Clínicos</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Tipo de antecedente:</span>
-                  <span className="break-words">{displayValue(record.tipoAntecedente)}</span>
-                </div>
-                {record.otroTipoAntecedente && (
-                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                    <span className="text-muted-foreground font-medium">Otro tipo especificado:</span>
-                    <span className="break-words">{record.otroTipoAntecedente}</span>
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Agente casual:</span>
-                  <span className="break-words">{displayValue(record.agenteCasual)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Cinemática:</span>
-                  <span className="break-words">{displayValue(record.cinematica)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Medida de seguridad:</span>
-                  <span className="break-words">{displayValue(record.medidaSeguridad)}</span>
-                </div>
+                
               </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Localización de lesiones */}
@@ -661,124 +725,64 @@ export default function PreHospitalRecordDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Manejo y procedimientos - Completos */}
+      {/* Manejo y procedimientos */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Heart className="h-5 w-5" />
-            Manejo y Procedimientos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3">Procedimientos Realizados</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.viaAerea ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Vía aérea</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.canalizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Canalización</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.empaquetamiento ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Empaquetamiento</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.inmovilizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Inmovilización</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.monitor ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Monitor</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.rcpBasica ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">RCP Básica</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.mastPna ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">MAST o PNA</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.collarinCervical ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Collarín Cervical</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.desfibrilacion ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Desfibrilación</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${record.apoyoVent ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  <span className="text-sm">Apoyo Vent.</span>
-                </div>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                <span className="text-muted-foreground font-medium">Oxígeno (L/min):</span>
-                <span className="break-words">{displayValue(record.oxigeno)}</span>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                <span className="text-muted-foreground font-medium">Otro manejo:</span>
-                <span className="break-words">{displayValue(record.otroManejo)}</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Medicamentos */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Pill className="h-5 w-5" />
-            Medicamentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div>
-            <h4 className="font-semibold mb-2">Medicamentos administrados</h4>
-            <p className="text-sm break-words">
-              {displayValue(record.medicamentos, "No se han administrado medicamentos")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Urgencias Gineco-obstétricas - Solo si hay datos */}
-      {(record.parto || record.aborto || record.hxVaginal || record.fechaUltimaMenstruacion || 
-        record.semanasGestacion || record.ruidosCardiacosFetales || record.expulsionPlacenta ||
-        record.horaExpulsionPlacenta || record.gesta || record.partos || record.cesareas ||
-        record.abortos || record.metodosAnticonceptivos) && (
-        <Card>
-          <CardHeader>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('manejo')}>
+          <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Urgencias Gineco-obstétricas
+              <Heart className="h-5 w-5" />
+              Manejo y Procedimientos
             </CardTitle>
-          </CardHeader>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.manejo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+        </CardHeader>
+        {expandedCards.manejo && (
           <CardContent>
             <div className="space-y-6">
               <div>
-                <h3 className="font-semibold mb-3">Condiciones</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <h3 className="font-semibold mb-3">Procedimientos Realizados</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${record.parto ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <span className="text-sm">Parto</span>
+                    <div className={`w-3 h-3 rounded-full ${record.viaAerea ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Vía aérea</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${record.aborto ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <span className="text-sm">Aborto</span>
+                    <div className={`w-3 h-3 rounded-full ${record.canalizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Canalización</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${record.hxVaginal ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <span className="text-sm">Hx. Vaginal</span>
+                    <div className={`w-3 h-3 rounded-full ${record.empaquetamiento ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Empaquetamiento</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.inmovilizacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Inmovilización</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.monitor ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Monitor</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.rcpBasica ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">RCP Básica</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.mastPna ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">MAST o PNA</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.collarinCervical ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Collarín Cervical</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.desfibrilacion ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Desfibrilación</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${record.apoyoVent ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <span className="text-sm">Apoyo Vent.</span>
                   </div>
                 </div>
               </div>
@@ -786,286 +790,377 @@ export default function PreHospitalRecordDetailPage() {
               <Separator />
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold mb-3">Información Ginecológica</h3>
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Fecha última menstruación:</span>
-                      <span className="break-words">{displayValue(record.fechaUltimaMenstruacion)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Semanas de gestación:</span>
-                      <span className="break-words">{displayValue(record.semanasGestacion)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Ruidos cardíacos fetales:</span>
-                      <span className="break-words">{displayValue(record.ruidosCardiacosFetales)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Expulsión placenta:</span>
-                      <span className="break-words">{displayValue(record.expulsionPlacenta)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Hora expulsión placenta:</span>
-                      <span className="break-words">{displayValue(record.horaExpulsionPlacenta)}</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Oxígeno (L/min):</span>
+                  <span className="break-words">{displayValue(record.oxigeno)}</span>
                 </div>
-                
-                <div>
-                  <h3 className="font-semibold mb-3">Historia Obstétrica</h3>
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Gesta:</span>
-                      <span className="break-words">{displayValue(record.gesta)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Partos:</span>
-                      <span className="break-words">{displayValue(record.partos)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Cesáreas:</span>
-                      <span className="break-words">{displayValue(record.cesareas)}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Abortos:</span>
-                      <span className="break-words">{displayValue(record.abortos)}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-muted-foreground font-medium">Métodos anticonceptivos:</span>
-                      <span className="break-words">{displayValue(record.metodosAnticonceptivos)}</span>
-                    </div>
-                  </div>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">Otro manejo:</span>
+                  <span className="break-words">{displayValue(record.otroManejo)}</span>
                 </div>
               </div>
             </div>
           </CardContent>
+        )}
+      </Card>
+
+      {/* Urgencias Gineco-obstétricas */}
+      {(record.parto || record.aborto || record.hxVaginal || record.fechaUltimaMenstruacion || 
+        record.semanasGestacion || record.ruidosCardiacosFetales || record.expulsionPlacenta ||
+        record.horaExpulsionPlacenta || record.gesta || record.partos || record.cesareas ||
+        record.abortos || record.metodosAnticonceptivos) && (
+        <Card>
+          <CardHeader className="cursor-pointer" onClick={() => toggleCard('gineco')}>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Urgencias Gineco-obstétricas
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                {expandedCards.gineco ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          {expandedCards.gineco && (
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-3">Condiciones</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${record.parto ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="text-sm">Parto</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${record.aborto ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="text-sm">Aborto</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${record.hxVaginal ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <span className="text-sm">Hx. Vaginal</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Información Ginecológica</h3>
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Fecha última menstruación:</span>
+                        <span className="break-words">{displayValue(record.fechaUltimaMenstruacion)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Semanas de gestación:</span>
+                        <span className="break-words">{displayValue(record.semanasGestacion)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Ruidos cardíacos fetales:</span>
+                        <span className="break-words">{displayValue(record.ruidosCardiacosFetales)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Expulsión placenta:</span>
+                        <span className="break-words">{displayValue(record.expulsionPlacenta)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Hora expulsión placenta:</span>
+                        <span className="break-words">{displayValue(record.horaExpulsionPlacenta)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-3">Historia Obstétrica</h3>
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Gesta:</span>
+                        <span className="break-words">{displayValue(record.gesta)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Partos:</span>
+                        <span className="break-words">{displayValue(record.partos)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Cesáreas:</span>
+                        <span className="break-words">{displayValue(record.cesareas)}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Abortos:</span>
+                        <span className="break-words">{displayValue(record.abortos)}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-muted-foreground font-medium">Métodos anticonceptivos:</span>
+                        <span className="break-words">{displayValue(record.metodosAnticonceptivos)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          )}
         </Card>
       )}
 
       {/* Negativa de atención */}
       {(record.negativaAtencion || record.firmaPaciente || record.firmaTestigo) && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5" />
-              Negativa de Atención
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
-                <span className="break-words">
-                  {record.negativaAtencion ? (
-                    <Badge variant="destructive">Sí</Badge>
-                  ) : (
-                    <Badge variant="secondary">No</Badge>
-                  )}
-                </span>
-              </div>
-              
-              {(record.firmaPaciente || record.firmaTestigo) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {record.firmaPaciente && (
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Firma del paciente:</span>
-                      <span className="break-words">{displayValue(record.firmaPaciente)}</span>
-                    </div>
-                  )}
-                  {record.firmaTestigo && (
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-muted-foreground font-medium">Firma del testigo:</span>
-                      <span className="break-words">{displayValue(record.firmaTestigo)}</span>
-                    </div>
-                  )}
-                </div>
-              )}
+          <CardHeader className="cursor-pointer" onClick={() => toggleCard('negativa')}>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <XCircle className="h-5 w-5" />
+                Negativa de Atención
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                {expandedCards.negativa ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
             </div>
-          </CardContent>
+          </CardHeader>
+          {expandedCards.negativa && (
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <span className="text-muted-foreground font-medium">¿Negativa de atención?:</span>
+                  <span className="break-words">
+                    {record.negativaAtencion ? (
+                      <Badge variant="destructive">Sí</Badge>
+                    ) : (
+                      <Badge variant="secondary">No</Badge>
+                    )}
+                  </span>
+                </div>
+                
+                {(record.firmaPaciente || record.firmaTestigo) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {record.firmaPaciente && (
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Firma del paciente:</span>
+                        <span className="break-words">{displayValue(record.firmaPaciente)}</span>
+                      </div>
+                    )}
+                    {record.firmaTestigo && (
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-muted-foreground font-medium">Firma del testigo:</span>
+                        <span className="break-words">{displayValue(record.firmaTestigo)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          )}
         </Card>
       )}
 
       {/* Justificación de prioridad */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Justificación de Prioridad
-          </CardTitle>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('prioridad')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Justificación de Prioridad
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.prioridad ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Prioridad Médica</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Prioridad:</span>
-                  <div>{getPriorityBadge(record.prioridad)}</div>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Pupilas:</span>
-                  <span className="break-words">{displayValue(record.pupilas)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Color de piel:</span>
-                  <span className="break-words">{displayValue(record.colorPiel)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Piel:</span>
-                  <span className="break-words">{displayValue(record.piel)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Temperatura:</span>
-                  <span className="break-words">{displayValue(record.temperatura)}</span>
+        {expandedCards.prioridad && (
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-3">Prioridad Médica</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Prioridad:</span>
+                    <div>{getPriorityBadge(record.prioridad)}</div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Pupilas:</span>
+                    <span className="break-words">{displayValue(record.pupilas)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Color de piel:</span>
+                    <span className="break-words">{displayValue(record.colorPiel)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Piel:</span>
+                    <span className="break-words">{displayValue(record.piel)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Temperatura:</span>
+                    <span className="break-words">{displayValue(record.temperatura)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Influencias</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground font-medium">Influenciado por:</span>
-                  {record.influenciadoPor && record.influenciadoPor.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {record.influenciadoPor.map((influencia, index) => (
-                        <Badge key={index} variant="outline">
-                          {influencia}
-                        </Badge>
-                      ))}
+              
+              <div>
+                <h3 className="font-semibold mb-3">Influencias</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground font-medium">Influenciado por:</span>
+                    {record.influenciadoPor && record.influenciadoPor.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {record.influenciadoPor.map((influencia, index) => (
+                          <Badge key={index} variant="outline">
+                            {influencia}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </div>
+                  {record.otroInfluencia && (
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-muted-foreground font-medium">Otra influencia especificada:</span>
+                      <span className="break-words">{record.otroInfluencia}</span>
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
                   )}
                 </div>
-                {record.otroInfluencia && (
-                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                    <span className="text-muted-foreground font-medium">Otra influencia especificada:</span>
-                    <span className="break-words">{record.otroInfluencia}</span>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Unidad médica que recibe */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Unidad Médica que Recibe
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-3">Lugares</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Lugar de origen:</span>
-                  <span className="break-words">{displayValue(record.lugarOrigen)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Lugar de consulta:</span>
-                  <span className="break-words">{displayValue(record.lugarConsulta)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Lugar de destino:</span>
-                  <span className="break-words">{displayValue(record.lugarDestino)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold mb-3">Ambulancia y Personal</h3>
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Ambulancia número:</span>
-                  <span className="break-words">{displayValue(record.ambulanciaNumero)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Placas de ambulancia:</span>
-                  <span className="break-words">{displayValue(record.ambulanciaPlacas)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Personal:</span>
-                  <span className="break-words">{displayValue(record.personal)}</span>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                  <span className="text-muted-foreground font-medium">Doctor:</span>
-                  <span className="break-words">{displayValue(record.doctor)}</span>
-                </div>
-              </div>
-            </div>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('unidad')}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Unidad Médica que Recibe
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.unidad ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
           </div>
-        </CardContent>
+        </CardHeader>
+        {expandedCards.unidad && (
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-3">Lugares</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Lugar de origen:</span>
+                    <span className="break-words">{displayValue(record.lugarOrigen)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Lugar de consulta:</span>
+                    <span className="break-words">{displayValue(record.lugarConsulta)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Lugar de destino:</span>
+                    <span className="break-words">{displayValue(record.lugarDestino)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">Ambulancia y Personal</h3>
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Ambulancia número:</span>
+                    <span className="break-words">{displayValue(record.ambulanciaNumero)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Placas de ambulancia:</span>
+                    <span className="break-words">{displayValue(record.ambulanciaPlacas)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Personal:</span>
+                    <span className="break-words">{displayValue(record.personal)}</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                    <span className="text-muted-foreground font-medium">Doctor:</span>
+                    <span className="break-words">{displayValue(record.doctor)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Médico receptor */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserCheck className="h-5 w-5" />
-            Médico Receptor
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-              <span className="text-muted-foreground font-medium">Nombre del médico:</span>
-              <span className="break-words">{displayValue(record.medicoReceptorNombre, "No asignado")}</span>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-              <span className="text-muted-foreground font-medium">Hora de entrega:</span>
-              <span className="break-words">{displayValue(record.horaEntrega)}</span>
-            </div>
-            {record.medicoReceptorFirma && (
-              <div className="md:col-span-2">
-                <span className="text-muted-foreground font-medium">Firma del médico:</span>
-                <div className="mt-2 border rounded p-2 bg-gray-50">
-                  <img 
-                    src={record.medicoReceptorFirma} 
-                    alt="Firma del médico receptor" 
-                    className="max-w-[200px] h-auto"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Observaciones adicionales - Solo si hay */}
-      {(record.observaciones || record.observacionesAdicionales) && (
-        <Card>
-          <CardHeader>
+        <CardHeader className="cursor-pointer" onClick={() => toggleCard('medico')}>
+          <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Observaciones
+              <UserCheck className="h-5 w-5" />
+              Médico Receptor
             </CardTitle>
-          </CardHeader>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {expandedCards.medico ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+        </CardHeader>
+        {expandedCards.medico && (
           <CardContent>
-            <div className="space-y-4">
-              {record.observaciones && (
-                <div>
-                  <h4 className="font-semibold mb-2">Observaciones médicas</h4>
-                  <p className="text-sm break-words">{record.observaciones}</p>
-                </div>
-              )}
-              {record.observacionesAdicionales && (
-                <>
-                  {record.observaciones && <Separator />}
-                  <div>
-                    <h4 className="font-semibold mb-2">Observaciones adicionales</h4>
-                    <p className="text-sm break-words">{record.observacionesAdicionales}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-muted-foreground font-medium">Nombre del médico:</span>
+                <span className="break-words">{displayValue(record.medicoReceptorNombre, "No asignado")}</span>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                <span className="text-muted-foreground font-medium">Hora de entrega:</span>
+                <span className="break-words">{displayValue(record.horaEntrega)}</span>
+              </div>
+              {record.medicoReceptorFirma && (
+                <div className="md:col-span-2">
+                  <span className="text-muted-foreground font-medium">Firma del médico:</span>
+                  <div className="mt-2 border rounded p-2 bg-gray-50">
+                    <img 
+                      src={record.medicoReceptorFirma} 
+                      alt="Firma del médico receptor" 
+                      className="max-w-[200px] h-auto"
+                    />
                   </div>
-                </>
+                </div>
               )}
             </div>
           </CardContent>
+        )}
+      </Card>
+
+      {/* Observaciones adicionales */}
+      {(record.observaciones || record.observacionesAdicionales) && (
+        <Card>
+          <CardHeader className="cursor-pointer" onClick={() => toggleCard('observaciones')}>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Observaciones
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                {expandedCards.observaciones ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          {expandedCards.observaciones && (
+            <CardContent>
+              <div className="space-y-4">
+                {record.observaciones && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Observaciones médicas</h4>
+                    <p className="text-sm break-words">{record.observaciones}</p>
+                  </div>
+                )}
+                {record.observacionesAdicionales && (
+                  <>
+                    {record.observaciones && <Separator />}
+                    <div>
+                      <h4 className="font-semibold mb-2">Observaciones adicionales</h4>
+                      <p className="text-sm break-words">{record.observacionesAdicionales}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          )}
         </Card>
       )}
     </div>
