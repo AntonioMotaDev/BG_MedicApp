@@ -1,0 +1,292 @@
+/* Print-specific styles for FRAP layout */
+@media print {
+  @page {
+    size: A4;
+    margin: 5mm;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    line-height: 1.2;
+    color: black;
+    background: white;
+  }
+
+  .print-layout {
+    width: 210mm;
+    max-width: 210mm;
+    background: white;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .print-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-header {
+    border: 2px solid black;
+    margin-bottom: 1mm;
+  }
+
+  .print-border {
+    border: 1px solid black;
+  }
+
+  .print-border-bottom {
+    border-bottom: 1px solid black;
+  }
+
+  .print-bg-gray {
+    background-color: #e5e7eb !important;
+  }
+
+  .print-checkbox {
+    width: 3mm;
+    height: 3mm;
+    border: 1px solid black;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: bold;
+  }
+
+  .print-underline {
+    border-bottom: 1px solid #9ca3af;
+    min-height: 4mm;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .print-signature-box {
+    border: 1px solid #9ca3af;
+    height: 12mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .print-body-map {
+    transform: scale(0.75);
+    transform-origin: center top;
+  }
+
+  .print-grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1mm;
+  }
+
+  .print-grid-8 {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 1mm;
+  }
+
+  .print-grid-6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2mm;
+  }
+
+  .print-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1mm;
+  }
+
+  .print-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2mm;
+  }
+
+  .print-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2mm;
+  }
+
+  .print-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4mm;
+  }
+
+  .print-col-span-12 { grid-column: span 12; }
+  .print-col-span-6 { grid-column: span 6; }
+  .print-col-span-3 { grid-column: span 3; }
+  .print-col-span-2 { grid-column: span 2; }
+
+  .print-text-xs { font-size: 8px; }
+  .print-text-sm { font-size: 10px; }
+  .print-font-bold { font-weight: bold; }
+  .print-font-semibold { font-weight: 600; }
+
+  .print-p-2 { padding: 2mm; }
+  .print-px-2 { padding-left: 2mm; padding-right: 2mm; }
+  .print-py-1 { padding-top: 1mm; padding-bottom: 1mm; }
+  .print-mb-1 { margin-bottom: 1mm; }
+  .print-mb-2 { margin-bottom: 2mm; }
+  .print-mt-2 { margin-top: 2mm; }
+
+  .print-flex { display: flex; }
+  .print-items-center { align-items: center; }
+  .print-justify-between { justify-content: space-between; }
+  .print-justify-center { justify-content: center; }
+  .print-gap-1 { gap: 1mm; }
+  .print-gap-2 { gap: 2mm; }
+  .print-gap-4 { gap: 4mm; }
+  .print-gap-8 { gap: 8mm; }
+
+  .print-text-center { text-align: center; }
+  .print-uppercase { text-transform: uppercase; }
+  .print-tracking-wide { letter-spacing: 0.025em; }
+
+  .print-w-16 { width: 16mm; }
+  .print-h-16 { height: 16mm; }
+  .print-h-12 { height: 12mm; }
+  .print-flex-1 { flex: 1; }
+
+  .print-max-h-10 { max-height: 10mm; }
+  .print-max-w-full { max-width: 100%; }
+  .print-object-contain { object-fit: contain; }
+
+  .print-text-gray-400 { color: #9ca3af; }
+  .print-text-gray-600 { color: #4b5563; }
+}
+
+/* Screen styles for the print layout component */
+.frap-layout {
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  line-height: 1.2;
+  color: black;
+  background: white;
+  width: 210mm;
+  max-width: 210mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.frap-section {
+  border: 1px solid black;
+  margin-bottom: 1mm;
+}
+
+.frap-header {
+  border: 2px solid black;
+  margin-bottom: 1mm;
+}
+
+.frap-section-header {
+  background-color: #e5e7eb;
+  padding: 2mm;
+  border-bottom: 1px solid black;
+  font-weight: bold;
+  font-size: 8px;
+}
+
+.frap-content {
+  padding: 2mm;
+}
+
+.frap-checkbox {
+  width: 3mm;
+  height: 3mm;
+  border: 1px solid black;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: bold;
+  margin-right: 1mm;
+}
+
+.frap-underline {
+  border-bottom: 1px solid #9ca3af;
+  min-height: 4mm;
+  display: inline-block;
+  width: 100%;
+}
+
+.frap-signature-box {
+  border: 1px solid #9ca3af;
+  height: 12mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.frap-body-map {
+  transform: scale(0.75);
+  transform-origin: center top;
+}
+
+/* Grid utilities */
+.frap-grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1mm; }
+.frap-grid-8 { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1mm; }
+.frap-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2mm; }
+.frap-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1mm; }
+.frap-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
+.frap-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; }
+.frap-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+
+.frap-col-span-12 { grid-column: span 12; }
+.frap-col-span-6 { grid-column: span 6; }
+.frap-col-span-3 { grid-column: span 3; }
+.frap-col-span-2 { grid-column: span 2; }
+
+/* Text utilities */
+.frap-text-xs { font-size: 8px; }
+.frap-text-sm { font-size: 10px; }
+.frap-font-bold { font-weight: bold; }
+.frap-font-semibold { font-weight: 600; }
+
+/* Spacing utilities */
+.frap-p-2 { padding: 2mm; }
+.frap-px-2 { padding-left: 2mm; padding-right: 2mm; }
+.frap-py-1 { padding-top: 1mm; padding-bottom: 1mm; }
+.frap-mb-1 { margin-bottom: 1mm; }
+.frap-mb-2 { margin-bottom: 2mm; }
+.frap-mt-2 { margin-top: 2mm; }
+
+/* Flexbox utilities */
+.frap-flex { display: flex; }
+.frap-items-center { align-items: center; }
+.frap-justify-between { justify-content: space-between; }
+.frap-justify-center { justify-content: center; }
+.frap-gap-1 { gap: 1mm; }
+.frap-gap-2 { gap: 2mm; }
+.frap-gap-4 { gap: 4mm; }
+.frap-gap-8 { gap: 8mm; }
+
+/* Text alignment */
+.frap-text-center { text-align: center; }
+.frap-uppercase { text-transform: uppercase; }
+.frap-tracking-wide { letter-spacing: 0.025em; }
+
+/* Sizing */
+.frap-w-16 { width: 16mm; }
+.frap-h-16 { height: 16mm; }
+.frap-h-12 { height: 12mm; }
+.frap-flex-1 { flex: 1; }
+.frap-max-h-10 { max-height: 10mm; }
+.frap-max-w-full { max-width: 100%; }
+.frap-object-contain { object-fit: contain; }
+
+/* Colors */
+.frap-text-gray-400 { color: #9ca3af; }
+.frap-text-gray-600 { color: #4b5563; } 

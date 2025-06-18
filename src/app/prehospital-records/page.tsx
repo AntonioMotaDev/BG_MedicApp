@@ -33,7 +33,9 @@ import {
   FileText,
   User,
   Clock,
-  MoreHorizontal
+  MoreHorizontal,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -67,6 +69,7 @@ export default function PreHospitalRecordsPage() {
   const [filteredRecords, setFilteredRecords] = useState<PreHospitalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filtersExpanded, setFiltersExpanded] = useState(true);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -323,80 +326,87 @@ export default function PreHospitalRecordsPage() {
 
       {/* Filtros - Responsive */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="h-5 w-5" />
-            Filtros de Búsqueda
-          </CardTitle>
+        <CardHeader className="cursor-pointer" onClick={() => setFiltersExpanded(!filtersExpanded)}>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filtros de Búsqueda
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              {filtersExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Buscar por nombre del paciente</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        {filtersExpanded && (
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="search">Buscar por nombre del paciente</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="search"
+                    placeholder="Nombre del paciente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="date">Fecha de atención</Label>
                 <Input
-                  id="search"
-                  placeholder="Nombre del paciente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  id="date"
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Estado del registro</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos los estados" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los estados</SelectItem>
+                    <SelectItem value="completed">Completado</SelectItem>
+                    <SelectItem value="partial">Parcial</SelectItem>
+                    <SelectItem value="draft">Borrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Prioridad</Label>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas las prioridades" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas las prioridades</SelectItem>
+                    <SelectItem value="rojo">Rojo</SelectItem>
+                    <SelectItem value="amarillo">Amarillo</SelectItem>
+                    <SelectItem value="verde">Verde</SelectItem>
+                    <SelectItem value="negro">Negro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="date">Fecha de atención</Label>
-              <Input
-                id="date"
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto">
+                Limpiar Filtros
+              </Button>
+              <Separator orientation="vertical" className="hidden sm:block h-6" />
+              <span className="text-sm text-muted-foreground text-center sm:text-left">
+                {filteredRecords.length} de {records.length} registros
+              </span>
             </div>
-            
-            <div className="space-y-2">
-              <Label>Estado del registro</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos los estados" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="completed">Completado</SelectItem>
-                  <SelectItem value="partial">Parcial</SelectItem>
-                  <SelectItem value="draft">Borrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Prioridad</Label>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas las prioridades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las prioridades</SelectItem>
-                  <SelectItem value="rojo">Rojo</SelectItem>
-                  <SelectItem value="amarillo">Amarillo</SelectItem>
-                  <SelectItem value="verde">Verde</SelectItem>
-                  <SelectItem value="negro">Negro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <Button variant="outline" onClick={clearFilters} className="w-full sm:w-auto">
-              Limpiar Filtros
-            </Button>
-            <Separator orientation="vertical" className="hidden sm:block h-6" />
-            <span className="text-sm text-muted-foreground text-center sm:text-left">
-              {filteredRecords.length} de {records.length} registros
-            </span>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Lista de registros - Responsive */}

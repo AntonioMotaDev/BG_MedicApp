@@ -1,56 +1,325 @@
-📁 src/
-├── 📁 app/
-│   ├── 📁 dashboard/
-│   │   └── page.tsx (DashboardPage - Página principal con menú de navegación)
-│   ├── 📁 main-menu/
-│   │   └── page.tsx (MainMenuPage - Menú principal con autenticación)
-│   ├── 📁 reports/
-│   │   └── page.tsx (ReportsPage - Generación de reportes)
-│   ├── layout.tsx (RootLayout - Layout principal con Sidebar y Header)
-│   └── globals.css
-├── 📁 components/
-│   ├── 📁 ui/
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── scroll-area.tsx
-│   │   └── toaster.tsx
-│   ├── Header.tsx (Componente de encabezado)
-│   ├── Sidebar.tsx (Barra lateral navegable)
-│   └── Footer.tsx (Componente de pie de página)
-├── 📁 hooks/
-│   └── use-toast.ts (Hook personalizado para notificaciones)
-└── 📁 lib/
-    └── utils.ts (Utilidades generales)
+# BG MedicApp - Sistema de Gestión Prehospitalaria
 
-Tecnologías utilizadas:
+## 📋 Descripción del Proyecto
+App multiplataforma para administrar y gestionar registros de atención prehospitalaria. Permite crear, manejar y exportar a PDF los registros ligados a pacientes previamente creados para agilizar el proceso con información previamente añadida.
 
-1. Frontend:
-- Next.js 14
-- TypeScript
-- Tailwind CSS
-- Shadcn/ui
-- Lucide Icons
+**Versión:** 1.0.0 (en desarrollo)
+**Framework:** Next.js 15.2.3 con App Router
+**Base de Datos:** Firebase Firestore + LocalStorage (modo offline)
+**Autenticación:** Firebase Auth
 
-2. Estado y Navegación:
-- React Hooks: Gestión de estado local
-- Next.js Router: Enrutamiento de la aplicación
-- LocalStorage: Almacenamiento del estado de autenticación
+---
 
-3. Estructura y Organización:
-- App Router: Nuevo sistema de enrutamiento de Next.js
-- Componentes Modulares: Arquitectura basada en componentes
-- Layouts Anidados: Sistema de layouts de Next.js
+## 🏗️ Estructura del Proyecto
 
-4. Características Principales:
-- Autenticación del lado del cliente
-- Navegación responsive
-- Sistema de notificaciones
-- Interfaz de usuario moderna y accesible
+```
+📁 BG_MedicApp/
+├── 📁 .next/                    # Build artifacts de Next.js
+├── 📁 .git/                     # Control de versiones Git
+├── 📁 .vscode/                  # Configuración de VS Code
+├── 📁 .idx/                     # Configuración de IDX (Google Cloud)
+├── 📁 node_modules/             # Dependencias de Node.js
+├── 📁 docs/                     # Documentación del proyecto
+│   ├── AUTHENTICATION_SYSTEM.md # Documentación del sistema de autenticación
+│   └── blueprint.md             # Plano arquitectónico del proyecto
+├── 📁 src/                      # Código fuente principal
+│   ├── 📁 app/                  # App Router de Next.js (rutas y páginas)
+│   │   ├── 📁 api/              # API Routes (Backend)
+│   │   │   ├── 📁 patients/     # Endpoints para gestión de pacientes
+│   │   │   │   └── route.ts     # CRUD de pacientes
+│   │   │   └── 📁 prehospital-records/ # Endpoints para registros
+│   │   │       ├── route.ts     # CRUD de registros
+│   │   │       └── 📁 [id]/     # Rutas dinámicas por ID
+│   │   │           └── route.ts # Operaciones específicas por registro
+│   │   ├── 📁 appointments/     # Gestión de citas médicas
+│   │   │   └── page.tsx
+│   │   ├── 📁 dashboard/        # Panel principal del sistema
+│   │   │   └── page.tsx         # Dashboard con estadísticas y navegación
+│   │   ├── 📁 login/            # Autenticación de usuarios
+│   │   │   └── page.tsx         # Página de inicio de sesión
+│   │   ├── 📁 register/         # Registro de nuevos usuarios
+│   │   │   └── page.tsx         # Página de registro
+│   │   ├── 📁 main-menu/        # Menú principal de navegación
+│   │   │   └── page.tsx
+│   │   ├── 📁 patients/         # Gestión de pacientes
+│   │   │   ├── 📁 new/          # Crear nuevo paciente
+│   │   │   │   └── page.tsx
+│   │   │   └── 📁 [patientId]/  # Detalles específicos de paciente
+│   │   │       └── page.tsx
+│   │   ├── 📁 prehospital-records/ # Visualización de registros
+│   │   │   ├── page.tsx         # Lista de todos los registros
+│   │   │   └── 📁 [id]/         # Detalle específico de registro
+│   │   │       └── page.tsx     # Vista detallada con todas las secciones
+│   │   ├── 📁 records/          # Gestión de registros prehospitalarios
+│   │   │   ├── 📁 new/          # Crear nuevo registro
+│   │   │   │   └── page.tsx
+│   │   │   └── 📁 edit/         # Editar registro existente
+│   │   │       └── 📁 [id]/
+│   │   │           └── page.tsx
+│   │   ├── 📁 reports/          # Generación de reportes
+│   │   │   └── page.tsx         # Panel de reportes y estadísticas
+│   │   ├── 📁 settings/         # Configuración del sistema
+│   │   │   └── page.tsx         # Configuraciones de usuario y sistema
+│   │   ├── 📁 profile/          # Perfil de usuario
+│   │   │   └── page.tsx         # Gestión del perfil personal
+│   │   ├── layout.tsx           # Layout principal con Header, Sidebar, Footer
+│   │   ├── page.tsx             # Página de inicio (Home)
+│   │   ├── globals.css          # Estilos globales de la aplicación
+│   │   ├── actions.ts           # Server Actions de Next.js
+│   │   ├── loading.tsx          # Componente de carga global
+│   │   ├── error.tsx            # Página de error global
+│   │   ├── not-found.tsx        # Página 404 personalizada
+│   │   └── favicon.ico          # Icono de la aplicación
+│   ├── 📁 components/           # Componentes React reutilizables
+│   │   ├── 📁 ui/               # Sistema de diseño (Shadcn/ui)
+│   │   │   ├── accordion.tsx    # Componente de acordeón
+│   │   │   ├── alert.tsx        # Alertas y notificaciones
+│   │   │   ├── alert-dialog.tsx # Diálogos de confirmación
+│   │   │   ├── avatar.tsx       # Avatares de usuario
+│   │   │   ├── badge.tsx        # Badges y etiquetas
+│   │   │   ├── button.tsx       # Botones con variantes
+│   │   │   ├── calendar.tsx     # Selector de fechas
+│   │   │   ├── card.tsx         # Tarjetas de contenido
+│   │   │   ├── chart.tsx        # Gráficos y visualizaciones
+│   │   │   ├── checkbox.tsx     # Checkboxes
+│   │   │   ├── dialog.tsx       # Diálogos modales
+│   │   │   ├── dropdown-menu.tsx # Menús desplegables
+│   │   │   ├── form.tsx         # Componentes de formulario
+│   │   │   ├── input.tsx        # Campos de entrada
+│   │   │   ├── label.tsx        # Etiquetas de formulario
+│   │   │   ├── menubar.tsx      # Barras de menú
+│   │   │   ├── popover.tsx      # Popovers
+│   │   │   ├── progress.tsx     # Barras de progreso
+│   │   │   ├── radio-group.tsx  # Grupos de radio buttons
+│   │   │   ├── scroll-area.tsx  # Áreas de scroll personalizadas
+│   │   │   ├── select.tsx       # Selectores dropdown
+│   │   │   ├── separator.tsx    # Separadores visuales
+│   │   │   ├── sheet.tsx        # Paneles laterales
+│   │   │   ├── sidebar.tsx      # Sidebar principal del sistema
+│   │   │   ├── skeleton.tsx     # Placeholders de carga
+│   │   │   ├── slider.tsx       # Controles deslizantes
+│   │   │   ├── switch.tsx       # Interruptores toggle
+│   │   │   ├── table.tsx        # Tablas de datos
+│   │   │   ├── tabs.tsx         # Pestañas de navegación
+│   │   │   ├── textarea.tsx     # Áreas de texto
+│   │   │   ├── toast.tsx        # Notificaciones toast
+│   │   │   ├── toaster.tsx      # Contenedor de toasts
+│   │   │   └── tooltip.tsx      # Tooltips informativos
+│   │   ├── AppSidebarContent.tsx # Contenido de la barra lateral
+│   │   ├── BodyMap.tsx          # Mapa corporal para localización de lesiones
+│   │   ├── ConfirmDialog.tsx    # Diálogo de confirmación personalizado
+│   │   ├── Error.tsx            # Componente de error personalizado
+│   │   ├── Footer.tsx           # Pie de página de la aplicación
+│   │   ├── Header.tsx           # Encabezado con navegación y usuario
+│   │   ├── Loading.tsx          # Componente de carga personalizado
+│   │   ├── LoginForm.tsx        # Formulario de inicio de sesión
+│   │   ├── NetworkStatusBanner.tsx # Banner de estado de red
+│   │   ├── PatientDetails.tsx   # Detalles del paciente (server)
+│   │   ├── PatientDetailsClient.tsx # Detalles del paciente (client)
+│   │   ├── PatientForm.tsx      # Formulario de creación/edición de pacientes
+│   │   ├── PatientManagementPage.tsx # Página de gestión de pacientes
+│   │   ├── PatientSelector.tsx  # Selector de pacientes
+│   │   ├── PatientTable.tsx     # Tabla de listado de pacientes
+│   │   ├── PreHospitalRecordForm.tsx # Formulario principal de registros (2164 líneas)
+│   │   ├── ProtectedRoute.tsx   # HOC para rutas protegidas
+│   │   ├── SearchBar.tsx        # Barra de búsqueda
+│   │   ├── SessionStatus.tsx    # Estado de la sesión de usuario
+│   │   ├── Sidebar.tsx          # Barra lateral de navegación
+│   │   ├── ThemeSelector.tsx    # Selector de tema (claro/oscuro)
+│   │   ├── ThemeToggle.tsx      # Toggle de tema
+│   │   └── UserProfileDropdown.tsx # Dropdown del perfil de usuario
+│   ├── 📁 hooks/                # Custom React Hooks
+│   │   ├── use-mobile.tsx       # Hook para detectar dispositivos móviles
+│   │   ├── use-theme.tsx        # Hook para gestión de temas
+│   │   ├── use-toast.ts         # Hook para notificaciones toast
+│   │   ├── useAuth.ts           # Hook de autenticación principal
+│   │   ├── useNetworkStatus.ts  # Hook para estado de conexión
+│   │   ├── usePatients.ts       # Hook para gestión de pacientes
+│   │   └── usePdfGenerator.ts   # Hook para generación de PDFs
+│   ├── 📁 lib/                  # Librerías y utilidades
+│   │   ├── 📁 services/         # Servicios de negocio
+│   │   │   └── patientService.ts # Servicio de gestión de pacientes
+│   │   ├── authService.ts       # Servicio de autenticación con Firebase
+│   │   ├── firebase.ts          # Configuración de Firebase
+│   │   ├── localDB.ts           # Base de datos local (IndexedDB)
+│   │   ├── schema.ts            # Esquemas de validación con Zod
+│   │   ├── sessionManager.ts    # Gestión de sesiones de usuario
+│   │   ├── syncService.ts       # Sincronización online/offline
+│   │   └── utils.ts             # Utilidades generales
+│   ├── 📁 ai/                   # Integración con IA (Google GenKit)
+│   │   ├── dev.ts               # Configuración de desarrollo
+│   │   └── genkit.ts            # Configuración de GenKit
+│   └── 📁 IMG/                  # Recursos de imagen
+│       └── logo.png             # Logo de la aplicación
+├── 📄 README.md                 # Documentación principal
+├── 📄 README_AUTH.md            # Documentación del sistema de autenticación
+├── 📄 FIREBASE_SETUP.md         # Guía de configuración de Firebase
+├── 📄 package.json              # Configuración de Node.js y dependencias
+├── 📄 package-lock.json         # Lock file de dependencias
+├── 📄 tsconfig.json             # Configuración de TypeScript
+├── 📄 tsconfig.tsbuildinfo      # Cache de compilación TypeScript
+├── 📄 next.config.ts            # Configuración de Next.js
+├── 📄 next-env.d.ts             # Tipos de Next.js
+├── 📄 tailwind.config.ts        # Configuración de Tailwind CSS
+├── 📄 postcss.config.mjs        # Configuración de PostCSS
+├── 📄 components.json           # Configuración de Shadcn/ui
+├── 📄 env.example               # Ejemplo de variables de entorno
+├── 📄 .gitignore                # Archivos ignorados por Git
+├── 📄 Formato_registro.jpg      # Imagen de referencia del formato
+└── 📄 project-structure.txt     # Este archivo de estructura
+```
 
-Estructura de rutas:
-- /dashboard: Página principal
-- /: Gestión de pacientes
-- /reports: Generación de reportes
-- /appointments: Gestión de citas
-- /profile: Perfil de usuario
-- /settings: Configuración
+---
+
+## 🚀 Tecnologías y Dependencias Principales
+
+### **Frontend Framework**
+- **Next.js 15.2.3** - Framework React con App Router
+- **React 18.3.1** - Librería de interfaz de usuario
+- **TypeScript 5** - Tipado estático
+
+### **Styling y UI**
+- **Tailwind CSS 3.4.1** - Framework de CSS utility-first
+- **Shadcn/ui** - Sistema de componentes basado en Radix UI
+- **Radix UI** - Componentes primitivos accesibles
+- **Lucide React** - Iconografía moderna
+- **Class Variance Authority** - Gestión de variantes de componentes
+
+### **Backend y Base de Datos**
+- **Firebase 11.8.1** - Backend as a Service
+  - **Firestore** - Base de datos NoSQL
+  - **Firebase Auth** - Sistema de autenticación
+- **IndexedDB** - Base de datos local para modo offline
+
+### **Formularios y Validación**
+- **React Hook Form 7.54.2** - Gestión de formularios
+- **Zod 3.24.2** - Validación de esquemas
+- **@hookform/resolvers** - Integración con validadores
+
+### **Generación de PDFs**
+- **jsPDF 3.0.1** - Generación de documentos PDF
+- **html2canvas 1.4.1** - Captura de elementos HTML
+
+### **Estado y Datos**
+- **TanStack Query 5.66.0** - Gestión de estado del servidor
+- **Date-fns 3.6.0** - Manipulación de fechas
+
+### **IA y Análisis**
+- **Google GenKit 1.8.0** - Framework de IA generativa
+- **Recharts 2.15.1** - Gráficos y visualizaciones
+
+### **Notificaciones**
+- **Sonner 2.0.5** - Sistema de notificaciones toast
+
+---
+
+## 🏛️ Arquitectura del Sistema
+
+### **Patrón de Arquitectura**
+- **Arquitectura por Capas** con separación clara de responsabilidades
+- **Component-Based Architecture** con React
+- **API Routes** para backend serverless
+
+### **Gestión de Estado**
+- **Local State** - React hooks (useState, useReducer)
+- **Server State** - TanStack Query para cache y sincronización
+- **Session State** - Custom hooks para autenticación
+- **Offline State** - IndexedDB para persistencia local
+
+### **Flujo de Datos**
+```
+Frontend (React) ↔ Custom Hooks ↔ Services ↔ Firebase/LocalDB
+                              ↓
+                         TanStack Query (Cache)
+```
+
+### **Sistema de Autenticación**
+- **Firebase Auth** - Autenticación de usuarios
+- **Session Manager** - Gestión de sesiones locales
+- **Protected Routes** - Control de acceso por roles
+- **Offline Support** - Funcionalidad sin conexión
+
+---
+
+## 📱 Funcionalidades Principales
+
+### **Gestión de Pacientes**
+- CRUD completo de pacientes
+- Búsqueda y filtrado avanzado
+- Validación de datos en tiempo real
+- Soporte offline
+
+### **Registros Prehospitalarios**
+- Formulario completo de 11 secciones
+- Mapa corporal interactivo para lesiones
+- Progreso de completado en tiempo real
+- Validación por pestañas
+- Firmas digitales
+
+### **Generación de Reportes**
+- Exportación a PDF de registros
+- Reportes estadísticos
+- Visualización de datos con gráficos
+
+### **Sistema de Usuarios**
+- Autenticación con email/password
+- Roles de usuario (admin/user)
+- Gestión de perfiles
+- Control de sesiones
+
+### **Características Técnicas**
+- **Responsive Design** - Adaptable a todos los dispositivos
+- **Dark/Light Mode** - Tema dinámico
+- **Offline First** - Funcionalidad sin conexión
+- **Progressive Web App** - Instalable como app nativa
+- **Real-time Sync** - Sincronización automática
+
+---
+
+## 🔧 Scripts de Desarrollo
+
+```bash
+npm run dev          # Servidor de desarrollo (puerto 9002)
+npm run build        # Compilación para producción
+npm run start        # Servidor de producción
+npm run lint         # Linting de código
+npm run typecheck    # Verificación de tipos
+npm run genkit:dev   # Desarrollo con GenKit IA
+npm run genkit:watch # GenKit en modo watch
+```
+
+---
+
+## 🌐 Rutas del Sistema
+
+### **Rutas Públicas**
+- `/login` - Inicio de sesión
+- `/register` - Registro de usuarios
+
+### **Rutas Protegidas**
+- `/` - Dashboard principal
+- `/dashboard` - Panel de control
+- `/patients` - Gestión de pacientes
+- `/patients/new` - Crear paciente
+- `/patients/[id]` - Detalles de paciente
+- `/records/new` - Crear registro
+- `/records/edit/[id]` - Editar registro
+- `/prehospital-records` - Lista de registros
+- `/prehospital-records/[id]` - Detalle de registro
+- `/reports` - Generación de reportes
+- `/appointments` - Gestión de citas
+- `/profile` - Perfil de usuario
+- `/settings` - Configuración
+
+### **API Routes**
+- `/api/patients` - CRUD de pacientes
+- `/api/prehospital-records` - CRUD de registros
+- `/api/prehospital-records/[id]` - Operaciones específicas
+
+---
+
+## 📊 Estado del Proyecto
+
+**Versión Actual:** 1.0.0 (En desarrollo)
+**Última Actualización:** Sistema de autenticación completo, formulario de registros funcional, generación de PDFs implementada Falta mejorar el pdf para que tenga la estructura del FRAP.
+

@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { ThemeProvider } from '@/hooks/use-theme';
 import './globals.css';
+import '@/styles/print.css';
 
 interface RootLayoutProps {
   children: ReactNode;

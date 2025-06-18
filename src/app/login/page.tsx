@@ -219,14 +219,6 @@ export default function LoginPage() {
               </Button>
             </div>
           </div>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p className="mb-2">Credenciales de ejemplo:</p>
-            <div className="bg-muted p-3 rounded-md text-xs">
-              <p><strong>Admin:</strong> admin@medicapp.com / admin123456</p>
-              <p><strong>Usuario:</strong> Crear cuenta nueva</p>
-            </div>
-      </div>
         </CardContent>
       </Card>
     </div>

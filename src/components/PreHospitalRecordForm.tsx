@@ -17,6 +17,7 @@ import type { Patient, TabStatus, TabConfig } from '@/lib/schema';
 import { savePreHospitalRecord, updatePreHospitalRecordProgress } from '@/app/actions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { usePdfGenerator } from '@/hooks/usePdfGenerator';
 
 interface PreHospitalRecordFormProps {
   patient: Patient;
@@ -139,8 +140,10 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   const [recordId, setRecordId] = useState<string | null>(null);
   const [tabStatuses, setTabStatuses] = useState<Record<string, TabStatus>>({});
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { generatePdf } = usePdfGenerator();
 
   // Tab configurations with required fields for completion status
   const tabConfigs: TabConfig[] = [
@@ -629,6 +632,47 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
       toast.error('Error al guardar el registro prehospitalario');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const generateFrapPdf = async () => {
+    try {
+      setIsGeneratingPdf(true);
+      const formData = getValues();
+      
+      // Crear el objeto record con la estructura esperada
+      const record = {
+        id: recordId || Date.now().toString(),
+        patientName: `${patient.firstName} ${patient.paternalLastName} ${patient.maternalLastName}`.trim(),
+        patient: {
+          age: patient.age,
+          sex: patient.sex,
+          phone: patient.phone,
+          responsiblePerson: patient.responsiblePerson,
+          emergencyContact: patient.emergencyContact,
+          street: patient.street,
+          exteriorNumber: patient.exteriorNumber,
+          interiorNumber: patient.interiorNumber,
+          neighborhood: patient.neighborhood,
+          city: patient.city,
+          insurance: patient.insurance,
+        },
+        createdAt: new Date().toISOString(),
+        status: 'draft',
+        ...formData,
+        antecedentesPatologicos: selectedPatologias,
+        lesiones: lesiones,
+        influenciadoPor: selectedInfluencias,
+        medicoReceptorFirma: firmaDataURL,
+      };
+
+      await generatePdf(record);
+      toast.success('PDF FRAP generado exitosamente');
+    } catch (error) {
+      console.error('Error generating FRAP PDF:', error);
+      toast.error('Error al generar el PDF FRAP');
+    } finally {
+      setIsGeneratingPdf(false);
     }
   };
 
@@ -2017,6 +2061,16 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </Button>
                   
                   <div className="flex gap-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={generateFrapPdf}
+                      disabled={isGeneratingPdf}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      {isGeneratingPdf ? 'Generando PDF...' : 'PDF FRAP'}
+                    </Button>
+                    
                     <Button 
                       type="button" 
                       variant="secondary" 
