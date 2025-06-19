@@ -12,12 +12,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, MapPin, Activity, FileText, User, Heart, Pill, Zap, Baby, UserX, AlertTriangle, Building2, Eraser, Download, Upload, PenTool, Save, CheckCircle2, Clock4 } from 'lucide-react';
+import { AlertCircle, Clock, MapPin, Activity, FileText, User, Heart, Pill, Zap, Baby, UserX, AlertTriangle, Building2, Eraser, Download, Upload, PenTool, Save, CheckCircle2, Clock4, Plus, Stethoscope } from 'lucide-react';
 import type { Patient, TabStatus, TabConfig } from '@/lib/schema';
 import { savePreHospitalRecord, updatePreHospitalRecordProgress } from '@/app/actions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { usePdfGenerator } from '@/hooks/usePdfGenerator';
+import { BodyMap } from '@/components/BodyMap';
 
 interface PreHospitalRecordFormProps {
   patient: Patient;
@@ -31,6 +32,20 @@ interface BodyLocation {
   x: number;
   y: number;
   side: 'front' | 'back';
+  order?: number;
+}
+
+interface VitalSigns {
+  id: string;
+  hora: string;
+  ta: string;    // Tensión Arterial
+  fc: string;    // Frecuencia Cardíaca
+  fr: string;    // Frecuencia Respiratoria
+  temp: string;  // Temperatura
+  satO2: string; // Saturación de Oxígeno
+  uc: string;    // Nivel de Conciencia
+  glu: string;   // Glucosa
+  glasgow: string; // Escala de Glasgow
 }
 
 interface FormData {
@@ -64,6 +79,9 @@ interface FormData {
 
   // Localización de lesiones
   lesiones: BodyLocation[];
+
+  // Exploración física (signos vitales)
+  signosVitales: VitalSigns[];
 
   // Manejo
   viaAerea: boolean;
@@ -133,6 +151,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   const [selectedLesionType, setSelectedLesionType] = useState("1");
   const [activeSide, setActiveSide] = useState<'front' | 'back'>('front');
   const [selectedInfluencias, setSelectedInfluencias] = useState<string[]>([]);
+  const [signosVitales, setSignosVitales] = useState<VitalSigns[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingProgress, setIsSavingProgress] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -174,6 +193,14 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
       icon: Activity,
       requiredFields: [],
       optionalFields: ["lesiones"]
+    },
+    {
+      id: "exploracion-fisica",
+      name: "Exploración Física",
+      icon: Stethoscope,
+      requiredFields: [],
+      optionalFields: ["signosVitales"],
+      isSpecial: true // Marcar como especial para destacar
     },
     {
       id: "manejo",
@@ -231,6 +258,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
       fecha: '', // Cambiar para que no se inicialice con fecha automática
       antecedentesPatologicos: [],
       lesiones: [],
+      signosVitales: [],
       viaAerea: false,
       canalizacion: false,
       empaquetamiento: false,
@@ -348,6 +376,10 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   }, [selectedInfluencias, setValue]);
 
   useEffect(() => {
+    setValue('signosVitales', signosVitales);
+  }, [signosVitales, setValue]);
+
+  useEffect(() => {
     setValue('medicoReceptorFirma', firmaDataURL);
   }, [firmaDataURL, setValue]);
 
@@ -355,6 +387,19 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   const getTabTriggerClass = (tabId: string): string => {
     const status = tabStatuses[tabId] || 'empty';
     const baseClasses = "flex flex-col items-center gap-2 p-3 h-auto text-xs transition-all duration-200 rounded-lg border-2 min-h-[80px] justify-center";
+    
+    // Clase especial para el tab de exploración física
+    if (tabId === 'exploracion-fisica') {
+      const specialBaseClasses = "flex flex-col items-center gap-2 p-3 h-auto text-xs transition-all duration-200 rounded-lg border-2 min-h-[80px] justify-center ring-2 ring-blue-200";
+      switch (status) {
+        case 'completed':
+          return `${specialBaseClasses} bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100 data-[state=active]:bg-blue-100 data-[state=active]:text-blue-800 data-[state=active]:border-blue-400 shadow-lg ring-blue-300`;
+        case 'partial':
+          return `${specialBaseClasses} bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100 data-[state=active]:bg-orange-100 data-[state=active]:text-orange-800 data-[state=active]:border-orange-400 shadow-lg ring-orange-300`;
+        default:
+          return `${specialBaseClasses} bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-blue-400 shadow-lg ring-slate-300`;
+      }
+    }
     
     switch (status) {
       case 'completed':
@@ -430,16 +475,21 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
   };
 
   const handleBodyClick = (event: React.MouseEvent<SVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    // Las coordenadas ya vienen en porcentaje desde el BodyMap
+    const x = event.clientX;
+    const y = event.clientY;
+    
+    // Determinar si es vista frontal o posterior basado en la posición X
+    // Vista frontal: lado izquierdo (x < 50%), Vista posterior: lado derecho (x >= 50%)
+    const side = x < 50 ? 'front' : 'back';
     
     const newLesion: BodyLocation = {
       id: `lesion-${Date.now()}`,
       type: selectedLesionType,
       x,
       y,
-      side: activeSide
+      side,
+      order: lesiones.length + 1 // Numeración secuencial
     };
     
     const updatedLesiones = [...lesiones, newLesion];
@@ -449,8 +499,13 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
 
   const removeLesion = (id: string) => {
     const updatedLesiones = lesiones.filter(l => l.id !== id);
-    setLesiones(updatedLesiones);
-    setValue('lesiones', updatedLesiones);
+    // Reordenar numeración después de eliminar
+    const reorderedLesiones = updatedLesiones.map((lesion, index) => ({
+      ...lesion,
+      order: index + 1
+    }));
+    setLesiones(reorderedLesiones);
+    setValue('lesiones', reorderedLesiones);
   };
 
   const handleInfluenciaChange = (influencia: string, checked: boolean) => {
@@ -855,6 +910,45 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
     }
   }, [isSignatureModalOpen, firmaDataURL]);
 
+  // Funciones para manejo de signos vitales
+  const addVitalSignsColumn = () => {
+    const currentTime = new Date().toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+    
+    const newVitalSigns: VitalSigns = {
+      id: `vitals-${Date.now()}`,
+      hora: currentTime,
+      ta: '',
+      fc: '',
+      fr: '',
+      temp: '',
+      satO2: '',
+      uc: '',
+      glu: '',
+      glasgow: ''
+    };
+    
+    const updated = [...signosVitales, newVitalSigns];
+    setSignosVitales(updated);
+    setValue('signosVitales', updated);
+  };
+
+  const removeVitalSignsColumn = (id: string) => {
+    const updated = signosVitales.filter(vs => vs.id !== id);
+    setSignosVitales(updated);
+    setValue('signosVitales', updated);
+  };
+
+  const updateVitalSigns = (id: string, field: keyof VitalSigns, value: string) => {
+    const updated = signosVitales.map(vs => 
+      vs.id === id ? { ...vs, [field]: value } : vs
+    );
+    setSignosVitales(updated);
+    setValue('signosVitales', updated);
+  };
+
   return (
     <div className="w-full max-w-full">
       <Card className="border-0 shadow-lg">
@@ -958,6 +1052,20 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                     )}
                   </div>
                   <span className="text-xs font-medium">Lesiones</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="exploracion-fisica" 
+                  className={getTabTriggerClass('exploracion-fisica')}
+                >
+                  <div className="relative">
+                    <Stethoscope className="h-4 w-4" />
+                    {getStatusIcon('exploracion-fisica') && (
+                      <div className="absolute -top-1 -right-1">
+                        {getStatusIcon('exploracion-fisica')}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium">Exploración Física</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="manejo" 
@@ -1329,181 +1437,197 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                       Localización de Lesiones
                     </h3>
                     
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label className="text-base font-medium">Tipo de lesión</Label>
-                          <RadioGroup
-                            value={selectedLesionType}
-                            onValueChange={setSelectedLesionType}
-                            className="grid grid-cols-2 gap-2 mt-2"
-                          >
-                            {tiposLesion.map((tipo) => (
-                              <div key={tipo.value} className="flex items-center space-x-2">
-                                <RadioGroupItem value={tipo.value} id={tipo.value} />
-                                <Label 
-                                  htmlFor={tipo.value}
-                                  className="text-sm cursor-pointer"
-                                  style={{ color: tipo.color }}
-                                >
-                                  {tipo.label}
-                                </Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        </div>
-
-                        <div>
-                          <Label className="text-base font-medium">Vista del cuerpo</Label>
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              type="button"
-                              variant={activeSide === 'front' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setActiveSide('front')}
-                            >
-                              Frontal
-                            </Button>
-                            <Button
-                              type="button"
-                              variant={activeSide === 'back' ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setActiveSide('back')}
-                            >
-                              Posterior
-                            </Button>
-                          </div>
-                        </div>
-
-                        {lesiones.length > 0 && (
-                          <div>
-                            <Label className="text-base font-medium">Lesiones marcadas</Label>
-                            <div className="mt-2 space-y-2">
-                              {lesiones.map((lesion) => {
-                                const tipoInfo = tiposLesion.find(t => t.value === lesion.type);
-                                return (
-                                  <div key={lesion.id} className="flex items-center justify-between p-2 bg-muted rounded">
-                                    <span className="text-sm">
-                                      {tipoInfo?.label} - {lesion.side === 'front' ? 'Frontal' : 'Posterior'}
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => removeLesion(lesion.id)}
-                                    >
-                                      ✕
-                                    </Button>
-                                  </div>
-                                );
-                              })}
+                    <div className="space-y-6">
+                      {/* Tipo de lesión - Siempre arriba */}
+                      <div>
+                        <Label className="text-base font-medium">Tipo de lesión</Label>
+                        <RadioGroup
+                          value={selectedLesionType}
+                          onValueChange={setSelectedLesionType}
+                          className="grid grid-cols-2 gap-2 mt-2"
+                        >
+                          {tiposLesion.map((tipo) => (
+                            <div key={tipo.value} className="flex items-center space-x-2">
+                              <RadioGroupItem value={tipo.value} id={tipo.value} />
+                              <Label 
+                                htmlFor={tipo.value}
+                                className="text-sm cursor-pointer"
+                                style={{ color: tipo.color }}
+                              >
+                                {tipo.label}
+                              </Label>
                             </div>
-                          </div>
-                        )}
+                          ))}
+                        </RadioGroup>
                       </div>
 
-                      <div className="flex justify-center">
-                        <svg
-                          width="200"
-                          height="400"
-                          viewBox="0 0 200 400"
-                          className="border cursor-crosshair"
-                          onClick={handleBodyClick}
-                        >
-                          {/* Silueta humana más detallada */}
-                          {activeSide === 'front' ? (
-                            // Vista frontal
-                            <g>
-                              {/* Cabeza */}
-                              <ellipse cx="100" cy="30" rx="25" ry="30" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Cuello */}
-                              <rect x="92" y="55" width="16" height="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Torso */}
-                              <ellipse cx="100" cy="120" rx="45" ry="50" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Brazos */}
-                              <ellipse cx="60" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="140" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Antebrazos */}
-                              <ellipse cx="45" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="155" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Manos */}
-                              <ellipse cx="40" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="160" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pelvis */}
-                              <ellipse cx="100" cy="180" rx="35" ry="20" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Muslos */}
-                              <ellipse cx="85" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="115" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pantorrillas */}
-                              <ellipse cx="80" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="120" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pies */}
-                              <ellipse cx="75" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="125" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2"/>
-                            </g>
-                          ) : (
-                            // Vista posterior
-                            <g>
-                              {/* Cabeza */}
-                              <ellipse cx="100" cy="30" rx="25" ry="30" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Cuello */}
-                              <rect x="92" y="55" width="16" height="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Torso posterior */}
-                              <ellipse cx="100" cy="120" rx="45" ry="50" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Brazos posteriores */}
-                              <ellipse cx="60" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="140" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Antebrazos posteriores */}
-                              <ellipse cx="45" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="155" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Manos posteriores */}
-                              <ellipse cx="40" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="160" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pelvis posterior */}
-                              <ellipse cx="100" cy="180" rx="35" ry="20" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Muslos posteriores */}
-                              <ellipse cx="85" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="115" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pantorrillas posteriores */}
-                              <ellipse cx="80" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="120" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Pies posteriores */}
-                              <ellipse cx="75" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2"/>
-                              <ellipse cx="125" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2"/>
-                              {/* Línea de la espalda */}
-                              <line x1="100" y1="70" x2="100" y2="170" stroke="#666" strokeWidth="1"/>
-                            </g>
+                      {/* Layout responsive para BodyMap y lista de lesiones */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* En pantallas grandes: columna izquierda con lista de lesiones */}
+                        {/* En pantallas medianas/pequeñas: esta columna aparece después del BodyMap */}
+                        <div className="order-2 lg:order-1">
+                          {lesiones.length > 0 && (
+                            <div>
+                              <Label className="text-base font-medium">Lesiones marcadas</Label>
+                              <div className="mt-2 space-y-2">
+                                {lesiones.map((lesion) => {
+                                  const tipoInfo = tiposLesion.find(t => t.value === lesion.type);
+                                  return (
+                                    <div key={lesion.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                                      <span className="text-sm">
+                                        <span className="font-medium">#{lesion.order || '?'}</span> - {tipoInfo?.label} - {lesion.side === 'front' ? 'Vista Frontal' : 'Vista Posterior'}
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeLesion(lesion.id)}
+                                      >
+                                        ✕
+                                      </Button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
                           )}
+                        </div>
 
-                          {/* Lesiones marcadas */}
-                          {lesiones
-                            .filter(lesion => lesion.side === activeSide)
-                            .map((lesion) => {
-                              const tipoInfo = tiposLesion.find(t => t.value === lesion.type);
-                              return (
-                                <circle
-                                  key={lesion.id}
-                                  cx={lesion.x * 2}
-                                  cy={lesion.y * 4}
-                                  r="6"
-                                  fill={tipoInfo?.color || '#000'}
-                                  stroke="#fff"
-                                  strokeWidth="2"
-                                  className="cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeLesion(lesion.id);
-                                  }}
-                                />
-                              );
-                            })}
-                        </svg>
+                        {/* En pantallas grandes: columna derecha con BodyMap */}
+                        {/* En pantallas medianas/pequeñas: esta columna aparece primero */}
+                        <div className="order-1 lg:order-2 flex justify-center">
+                          <BodyMap
+                            lesions={lesiones}
+                            side="front"
+                            showSwitch={false}
+                            onBodyClick={handleBodyClick}
+                            onLesionClick={removeLesion}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </TabsContent>
 
-                {/* Sección 5: Manejo */}
+                {/* Sección 5: Exploración Física */}
+                <TabsContent value="exploracion-fisica" className="space-y-6 mt-0">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                      <Stethoscope className="h-5 w-5" />
+                      Exploración Física - Signos Vitales Durante el Traslado
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {/* Botón para agregar nueva columna */}
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm text-gray-600">
+                          Registre los signos vitales del paciente durante el traslado. Puede agregar múltiples registros con diferentes horarios.
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={addVitalSignsColumn}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Agregar Registro
+                        </Button>
+                      </div>
+
+                      {/* Tabla de signos vitales */}
+                      {signosVitales.length === 0 ? (
+                        <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                          <Stethoscope className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-500 mb-3">No hay registros de signos vitales</p>
+                          <Button
+                            type="button"
+                            onClick={addVitalSignsColumn}
+                            variant="outline"
+                            size="sm"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Agregar primer registro
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto border rounded-lg">
+                          <table className="w-full min-w-[800px]">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="text-left p-3 font-medium text-gray-700 border-b">Parámetro</th>
+                                {signosVitales.map((_, index) => (
+                                  <th key={index} className="text-center p-3 font-medium text-gray-700 border-b min-w-[120px]">
+                                    Registro {index + 1}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {/* Fila de horarios */}
+                              <tr className="bg-blue-50">
+                                <td className="p-3 font-medium text-gray-700 border-b">
+                                  Hora
+                                </td>
+                                {signosVitales.map((vs) => (
+                                  <td key={vs.id} className="p-2 border-b">
+                                    <div className="flex items-center gap-1">
+                                      <Input
+                                        type="time"
+                                        value={vs.hora}
+                                        onChange={(e) => updateVitalSigns(vs.id, 'hora', e.target.value)}
+                                        className="text-center text-sm"
+                                      />
+                                      <Button
+                                        type="button"
+                                        onClick={() => removeVitalSignsColumn(vs.id)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      >
+                                        ×
+                                      </Button>
+                                    </div>
+                                  </td>
+                                ))}
+                              </tr>
+                              
+                              {/* Filas de signos vitales */}
+                              {[
+                                { field: 'ta', label: 'T.A. (mmHg)', placeholder: '120/80' },
+                                { field: 'fc', label: 'F.C. (lpm)', placeholder: '80' },
+                                { field: 'fr', label: 'F.R. (rpm)', placeholder: '20' },
+                                { field: 'temp', label: 'Temp. (°C)', placeholder: '36.5' },
+                                { field: 'satO2', label: 'SpO2 (%)', placeholder: '98' },
+                                { field: 'uc', label: 'N.C.', placeholder: 'Alerta' },
+                                { field: 'glu', label: 'Glucosa (mg/dL)', placeholder: '100' },
+                                { field: 'glasgow', label: 'Glasgow', placeholder: '15' }
+                              ].map((param) => (
+                                <tr key={param.field} className="hover:bg-gray-50">
+                                  <td className="p-3 font-medium text-gray-700 border-b">
+                                    {param.label}
+                                  </td>
+                                  {signosVitales.map((vs) => (
+                                    <td key={vs.id} className="p-2 border-b">
+                                      <Input
+                                        value={vs[param.field as keyof VitalSigns] as string}
+                                        onChange={(e) => updateVitalSigns(vs.id, param.field as keyof VitalSigns, e.target.value)}
+                                        placeholder={param.placeholder}
+                                        className="text-center text-sm"
+                                      />
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Sección 6: Manejo */}
                 <TabsContent value="manejo" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
@@ -1554,7 +1678,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </div>
                 </TabsContent>
 
-                {/* Sección 6: Medicamentos */}
+                {/* Sección 7: Medicamentos */}
                 <TabsContent value="medicamentos" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
@@ -1573,7 +1697,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </div>
                 </TabsContent>
 
-                {/* Sección 7: Urgencias Gineco-obstétricas */}
+                {/* Sección 8: Urgencias Gineco-obstétricas */}
                 {esPacienteFemenino && (
                   <TabsContent value="gineco-obstetrica" className="space-y-6 mt-0">
                     <div>
@@ -1717,7 +1841,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </TabsContent>
                 )}
 
-                {/* Sección 8: Negativa de Atención */}
+                {/* Sección 9: Negativa de Atención */}
                 <TabsContent value="negativa" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
@@ -1760,7 +1884,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </div>
                 </TabsContent>
 
-                {/* Sección 9: Justificación de Prioridad */}
+                {/* Sección 10: Justificación de Prioridad */}
                 <TabsContent value="justificacion-prioridad" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
@@ -1893,7 +2017,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </div>
                 </TabsContent>
 
-                {/* Sección 10: Unidad Médica que Recibe */}
+                {/* Sección 11: Unidad Médica que Recibe */}
                 <TabsContent value="unidad-medica" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
@@ -1962,7 +2086,7 @@ export default function PreHospitalRecordForm({ patient, onCancel, onSubmitSucce
                   </div>
                 </TabsContent>
 
-                {/* Sección 11: Médico Receptor */}
+                {/* Sección 12: Médico Receptor */}
                 <TabsContent value="medico-receptor" className="space-y-6 mt-0">
                   <div>
                     <h3 className="text-lg font-medium mb-4 flex items-center gap-2">

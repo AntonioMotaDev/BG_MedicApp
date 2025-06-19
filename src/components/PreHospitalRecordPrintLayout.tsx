@@ -1,6 +1,19 @@
 import React from 'react';
 import { BodyMap } from './BodyMap';
 
+interface VitalSigns {
+  id: string;
+  hora: string;
+  ta: string;    // Tensión Arterial
+  fc: string;    // Frecuencia Cardíaca
+  fr: string;    // Frecuencia Respiratoria
+  temp: string;  // Temperatura
+  satO2: string; // Saturación de Oxígeno
+  uc: string;    // Nivel de Conciencia
+  glu: string;   // Glucosa
+  glasgow: string; // Escala de Glasgow
+}
+
 interface PreHospitalRecord {
   id: string;
   patientName: string;
@@ -40,6 +53,7 @@ interface PreHospitalRecord {
   cinematica?: string;
   medidaSeguridad?: string;
   lesiones?: any[];
+  signosVitales?: VitalSigns[];
   viaAerea?: boolean;
   canalizacion?: boolean;
   empaquetamiento?: boolean;
@@ -344,23 +358,13 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
           <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">6. LOCALIZACIÓN DE LESIONES</h2>
         </div>
         <div className="frap-content print-p-2">
-          <div className="frap-flex print-flex frap-justify-center print-justify-center frap-gap-8 print-gap-8">
+          <div className="frap-flex print-flex frap-justify-center print-justify-center">
             <div className="frap-text-center print-text-center">
-              <p className="frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-mb-2 print-mb-2">ANVERSO</p>
+              <p className="frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-mb-2 print-mb-2">Haga clic en el cuerpo para marcar lesiones</p>
               <div className="frap-body-map print-body-map">
                 <BodyMap
-                  lesions={record.lesiones?.filter(l => l.side === 'front') || []}
+                  lesions={record.lesiones || []}
                   side="front"
-                  showSwitch={false}
-                />
-              </div>
-            </div>
-            <div className="frap-text-center print-text-center">
-              <p className="frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-mb-2 print-mb-2">REVERSO</p>
-              <div className="frap-body-map print-body-map">
-                <BodyMap
-                  lesions={record.lesiones?.filter(l => l.side === 'back') || []}
-                  side="back"
                   showSwitch={false}
                 />
               </div>
@@ -383,10 +387,70 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 7: Manejo */}
+      {/* Sección 7: Exploración Física (Signos Vitales) */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">7. MANEJO</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">7. EXPLORACIÓN FÍSICA - SIGNOS VITALES</h2>
+        </div>
+        <div className="frap-content print-p-2">
+          {record.signosVitales && record.signosVitales.length > 0 ? (
+            <div className="frap-vital-signs-table print-vital-signs-table">
+              <table className="frap-w-full print-w-full frap-border-collapse print-border-collapse">
+                <thead>
+                  <tr className="frap-bg-gray-100 print-bg-gray-100">
+                    <th className="frap-border print-border frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-p-1 print-p-1">Parámetro</th>
+                    {record.signosVitales.map((vs, index) => (
+                      <th key={vs.id} className="frap-border print-border frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-p-1 print-p-1">
+                        Registro {index + 1}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="frap-bg-blue-50 print-bg-blue-50">
+                    <td className="frap-border print-border frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-p-1 print-p-1">Hora</td>
+                    {record.signosVitales.map((vs) => (
+                      <td key={vs.id} className="frap-border print-border frap-text-xs print-text-xs frap-p-1 print-p-1 frap-text-center print-text-center">
+                        {vs.hora}
+                      </td>
+                    ))}
+                  </tr>
+                  {[
+                    { field: 'ta', label: 'T.A. (mmHg)' },
+                    { field: 'fc', label: 'F.C. (lpm)' },
+                    { field: 'fr', label: 'F.R. (rpm)' },
+                    { field: 'temp', label: 'Temp. (°C)' },
+                    { field: 'satO2', label: 'SpO2 (%)' },
+                    { field: 'uc', label: 'N.C.' },
+                    { field: 'glu', label: 'Glucosa (mg/dL)' },
+                    { field: 'glasgow', label: 'Glasgow' }
+                  ].map((param) => (
+                    <tr key={param.field}>
+                      <td className="frap-border print-border frap-text-xs print-text-xs frap-font-semibold print-font-semibold frap-p-1 print-p-1">
+                        {param.label}
+                      </td>
+                      {record.signosVitales?.map((vs) => (
+                        <td key={vs.id} className="frap-border print-border frap-text-xs print-text-xs frap-p-1 print-p-1 frap-text-center print-text-center">
+                          {(vs as any)[param.field]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="frap-text-center print-text-center frap-text-xs print-text-xs frap-text-gray-500 print-text-gray-500">
+              No se registraron signos vitales durante el traslado
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sección 8: Manejo */}
+      <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
+        <div className="frap-section-header print-bg-gray print-border-bottom">
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">8. MANEJO</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-grid-5 print-grid-5 frap-text-xs print-text-xs frap-mb-2 print-mb-2">
@@ -427,10 +491,10 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 8: Medicamentos */}
+      {/* Sección 9: Medicamentos */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">8. MEDICAMENTOS</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">9. MEDICAMENTOS</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-underline print-underline" style={{ minHeight: '10mm', fontSize: '8px' }}>
@@ -439,10 +503,10 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 9: Urgencias Gineco-obstétricas */}
+      {/* Sección 10: Urgencias Gineco-obstétricas */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">9. URGENCIAS GINECO-OBSTÉTRICAS</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">10. URGENCIAS GINECO-OBSTÉTRICAS</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-grid-3 print-grid-3 frap-text-xs print-text-xs frap-mb-2 print-mb-2">
@@ -494,10 +558,10 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 10: Justificación de Prioridad */}
+      {/* Sección 11: Justificación de Prioridad */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">10. JUSTIFICACIÓN DE PRIORIDAD</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">11. JUSTIFICACIÓN DE PRIORIDAD</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-grid-4 print-grid-4 frap-text-xs print-text-xs frap-mb-2 print-mb-2">
@@ -539,10 +603,10 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 11: Unidad Médica que Recibe */}
+      {/* Sección 12: Unidad Médica que Recibe */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">11. UNIDAD MÉDICA QUE RECIBE</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">12. UNIDAD MÉDICA QUE RECIBE</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-grid-3 print-grid-3 frap-text-xs print-text-xs frap-mb-2 print-mb-2">
@@ -594,10 +658,10 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
         </div>
       </div>
 
-      {/* Sección 12: Médico Receptor */}
+      {/* Sección 13: Médico Receptor */}
       <div className="frap-section print-border print-section frap-mb-1 print-mb-1">
         <div className="frap-section-header print-bg-gray print-border-bottom">
-          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">12. MÉDICO RECEPTOR</h2>
+          <h2 className="frap-font-bold print-font-bold frap-text-xs print-text-xs">13. MÉDICO RECEPTOR</h2>
         </div>
         <div className="frap-content print-p-2">
           <div className="frap-grid-3 print-grid-3 frap-text-xs print-text-xs">

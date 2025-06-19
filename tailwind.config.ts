@@ -1,3 +1,4 @@
+// https://tailwindcss.com/docs/guides/nextjs
 
 import type { Config } from "tailwindcss";
 import defaultTheme from 'tailwindcss/defaultTheme'; // Import defaultTheme

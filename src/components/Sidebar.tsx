@@ -12,21 +12,32 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 const Sidebar: FC<SidebarProps> = ({ className }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
-  // Check if mobile
+  // Check if mobile and portrait orientation
   useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
+    const checkScreenOrientation = () => {
+      const isMobileSize = window.innerWidth < 768;
+      const isPortraitOrientation = window.innerHeight > window.innerWidth;
+      
+      setIsMobile(isMobileSize);
+      setIsPortrait(isPortraitOrientation);
+      
+      if (isMobileSize) {
         setIsCollapsed(true);
       }
     };
 
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
+    checkScreenOrientation();
+    window.addEventListener('resize', checkScreenOrientation);
+    window.addEventListener('orientationchange', checkScreenOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkScreenOrientation);
+      window.removeEventListener('orientationchange', checkScreenOrientation);
+    };
   }, []);
 
   const routes = [
@@ -74,6 +85,11 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
       setIsCollapsed(true);
     }
   };
+
+  // Hide sidebar in portrait orientation
+  if (isPortrait) {
+    return null;
+  }
 
   return (
     <div className={cn(

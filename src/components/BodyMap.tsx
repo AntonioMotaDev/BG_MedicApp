@@ -7,6 +7,7 @@ interface Lesion {
   y: number;
   side: 'front' | 'back';
   color?: string;
+  order?: number;
 }
 
 interface BodyMapProps {
@@ -14,6 +15,8 @@ interface BodyMapProps {
   side: 'front' | 'back';
   onSideChange?: (side: 'front' | 'back') => void;
   showSwitch?: boolean;
+  onBodyClick?: (event: React.MouseEvent<SVGElement>) => void;
+  onLesionClick?: (lesionId: string) => void;
 }
 
 const lesionColors: Record<string, string> = {
@@ -29,110 +32,120 @@ const lesionColors: Record<string, string> = {
   '10': '#1f2937', // Otro
 };
 
-export const BodyMap: React.FC<BodyMapProps> = ({ lesions, side, onSideChange, showSwitch = true }) => {
+export const BodyMap: React.FC<BodyMapProps> = ({ lesions, side, onSideChange, showSwitch = false, onBodyClick, onLesionClick }) => {
+  // Tamaño aumentado 25% (de 200px a 250px)
+  const imageWidth = 250;
+  const imageHeight = 208; // Proporcionalmente ajustado basado en 618x515 -> 250x208
+
   return (
     <div className="flex flex-col items-center">
-      {showSwitch && (
-        <div className="mb-2 flex gap-2">
-          <button
-            className={`px-2 py-1 rounded text-xs border ${side === 'front' ? 'bg-primary text-white' : 'bg-white text-gray-700'}`}
-            onClick={() => onSideChange && onSideChange('front')}
-            type="button"
-          >
-            Anverso
-          </button>
-          <button
-            className={`px-2 py-1 rounded text-xs border ${side === 'back' ? 'bg-primary text-white' : 'bg-white text-gray-700'}`}
-            onClick={() => onSideChange && onSideChange('back')}
-            type="button"
-          >
-            Reverso
-          </button>
-        </div>
-      )}
-      <svg
-        width="180"
-        height="360"
-        viewBox="0 0 200 400"
-        className="max-w-full h-auto"
-      >
-        {side === 'front' ? (
-          <g>
-            {/* Cabeza */}
-            <ellipse cx="100" cy="30" rx="25" ry="30" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Cuello */}
-            <rect x="92" y="55" width="16" height="15" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Torso */}
-            <ellipse cx="100" cy="120" rx="45" ry="50" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Brazos */}
-            <ellipse cx="60" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="140" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Antebrazos */}
-            <ellipse cx="45" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="155" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Manos */}
-            <ellipse cx="40" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="160" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pelvis */}
-            <ellipse cx="100" cy="180" rx="35" ry="20" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Muslos */}
-            <ellipse cx="85" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="115" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pantorrillas */}
-            <ellipse cx="80" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="120" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pies */}
-            <ellipse cx="75" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="125" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2" />
-          </g>
-        ) : (
-          <g>
-            {/* Cabeza */}
-            <ellipse cx="100" cy="30" rx="25" ry="30" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Cuello */}
-            <rect x="92" y="55" width="16" height="15" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Torso posterior */}
-            <ellipse cx="100" cy="120" rx="45" ry="50" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Brazos posteriores */}
-            <ellipse cx="60" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="140" cy="100" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Antebrazos posteriores */}
-            <ellipse cx="45" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="155" cy="160" rx="10" ry="35" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Manos posteriores */}
-            <ellipse cx="40" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="160" cy="200" rx="8" ry="15" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pelvis posterior */}
-            <ellipse cx="100" cy="180" rx="35" ry="20" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Muslos posteriores */}
-            <ellipse cx="85" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="115" cy="240" rx="15" ry="45" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pantorrillas posteriores */}
-            <ellipse cx="80" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="120" cy="310" rx="12" ry="40" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Pies posteriores */}
-            <ellipse cx="75" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2" />
-            <ellipse cx="125" cy="365" rx="15" ry="10" fill="none" stroke="#666" strokeWidth="2" />
-            {/* Línea de la espalda */}
-            <line x1="100" y1="70" x2="100" y2="170" stroke="#666" strokeWidth="1" />
-          </g>
-        )}
-        {/* Lesiones marcadas */}
-        {lesions
-          .filter((l) => l.side === side)
-          .map((lesion) => (
-            <circle
-              key={lesion.id}
-              cx={lesion.x * 2}
-              cy={lesion.y * 4}
-              r="7"
-              fill={lesionColors[lesion.type] || '#000'}
-              stroke="#fff"
-              strokeWidth="2"
-              opacity="0.85"
-            />
-          ))}
-      </svg>
+      <div className="relative inline-block">
+        {/* Imagen del cuerpo humano */}
+        <img
+          src="/images/cuerpo-humano.jpg"
+          alt="Cuerpo humano - Vista frontal y posterior"
+          className="max-w-full h-auto border"
+          style={{ 
+            width: `${imageWidth}px`, 
+            height: 'auto'
+          }}
+        />
+        
+        {/* SVG overlay para las lesiones */}
+        <svg
+          width={imageWidth}
+          height={imageHeight}
+          viewBox={`0 0 ${imageWidth} ${imageHeight}`}
+          className="absolute top-0 left-0 w-full h-full cursor-crosshair"
+          style={{ width: `${imageWidth}px`, height: `${imageHeight}px` }}
+          onClick={(e) => {
+            if (onBodyClick) {
+              // Obtener las coordenadas exactas relativas al SVG
+              const svgRect = e.currentTarget.getBoundingClientRect();
+              const x = ((e.clientX - svgRect.left) / svgRect.width) * 100;
+              const y = ((e.clientY - svgRect.top) / svgRect.height) * 100;
+              
+              // Crear evento sintético con las coordenadas correctas
+              const syntheticEvent = {
+                ...e,
+                currentTarget: {
+                  ...e.currentTarget,
+                  getBoundingClientRect: () => ({
+                    left: 0,
+                    top: 0,
+                    width: 100,
+                    height: 100,
+                    right: 100,
+                    bottom: 100,
+                    x: 0,
+                    y: 0,
+                    toJSON: () => ({})
+                  })
+                },
+                clientX: x,
+                clientY: y
+              } as React.MouseEvent<SVGElement>;
+              
+              onBodyClick(syntheticEvent);
+            }
+          }}
+        >
+          {/* Área transparente clickeable */}
+          <rect
+            x="0"
+            y="0"
+            width={imageWidth}
+            height={imageHeight}
+            fill="transparent"
+            className="cursor-crosshair"
+          />
+          
+          {/* Lesiones marcadas con numeración */}
+          {lesions
+            .map((lesion, index) => {
+              const centerX = (lesion.x / 100) * imageWidth;
+              const centerY = (lesion.y / 100) * imageHeight;
+              
+              return (
+                <g key={lesion.id}>
+                  {/* Círculo de la lesión */}
+                  <circle
+                    cx={centerX}
+                    cy={centerY}
+                    r="12"
+                    fill={lesionColors[lesion.type] || '#000'}
+                    stroke="#fff"
+                    strokeWidth="2"
+                    opacity="0.85"
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLesionClick && onLesionClick(lesion.id);
+                    }}
+                  />
+                  {/* Número de la lesión */}
+                  <text
+                    x={centerX}
+                    y={centerY}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill="#fff"
+                    fontSize="10"
+                    fontWeight="bold"
+                    className="pointer-events-none select-none"
+                  >
+                    {lesion.order || index + 1}
+                  </text>
+                </g>
+              );
+            })}
+        </svg>
+      </div>
+      
+      <div className="mt-2 text-xs text-gray-600 text-center">
+        <p>Haga clic en el cuerpo para marcar lesiones</p>
+        <p>Vuelva a hacer clic en la lesión para eliminarla</p>
+      </div>
     </div>
   );
 }; 

@@ -2,6 +2,19 @@ import { useCallback } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+interface VitalSigns {
+  id: string;
+  hora: string;
+  ta: string;    // Tensión Arterial
+  fc: string;    // Frecuencia Cardíaca
+  fr: string;    // Frecuencia Respiratoria
+  temp: string;  // Temperatura
+  satO2: string; // Saturación de Oxígeno
+  uc: string;    // Nivel de Conciencia
+  glu: string;   // Glucosa
+  glasgow: string; // Escala de Glasgow
+}
+
 interface PreHospitalRecord {
   id: string;
   patientName: string;
@@ -41,6 +54,7 @@ interface PreHospitalRecord {
   cinematica?: string;
   medidaSeguridad?: string;
   lesiones?: any[];
+  signosVitales?: VitalSigns[];
   viaAerea?: boolean;
   canalizacion?: boolean;
   empaquetamiento?: boolean;
@@ -99,7 +113,7 @@ export const usePdfGenerator = () => {
       printContainer.style.position = 'fixed';
       printContainer.style.top = '-9999px';
       printContainer.style.left = '-9999px';
-      printContainer.style.width = '210mm'; // A4 width
+      printContainer.style.width = 'auto'; // Cambio de 210mm a 297mm para hacer más ancho
       printContainer.style.height = 'auto';
       printContainer.style.backgroundColor = 'white';
       printContainer.style.padding = '0';

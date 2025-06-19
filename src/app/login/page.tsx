@@ -208,7 +208,7 @@ export default function LoginPage() {
                 </Link>
               </Button>
 
-              <Button
+              {/* <Button
                 variant="outline"
                 onClick={createDemoAdmin}
                 disabled={isCreatingAdmin}
@@ -216,7 +216,7 @@ export default function LoginPage() {
               >
                 {isCreatingAdmin && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isCreatingAdmin ? "Creando..." : "Crear Admin Demo"}
-              </Button>
+              </Button> */}
             </div>
           </div>
         </CardContent>

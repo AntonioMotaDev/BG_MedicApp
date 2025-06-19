@@ -1,8 +1,16 @@
 import { FC } from 'react';
+import { cn } from '@/lib/utils';
 
-const Footer: FC = () => {
+interface FooterProps {
+  className?: string;
+}
+
+const Footer: FC<FooterProps> = ({ className }) => {
   return (
-    <footer className="mt-auto border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0">
+    <footer className={cn(
+      "mt-auto border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shrink-0",
+      className
+    )}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 text-center sm:text-left">
           <p className="text-sm text-muted-foreground">

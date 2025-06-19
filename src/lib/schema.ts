@@ -111,6 +111,20 @@ export const preHospitalRecordSchema = z.object({
     side: z.enum(['front', 'back'])
   })).optional(),
 
+  // Exploración física (signos vitales)
+  signosVitales: z.array(z.object({
+    id: z.string(),
+    hora: z.string(),
+    ta: z.string(),
+    fc: z.string(),
+    fr: z.string(),
+    temp: z.string(),
+    satO2: z.string(),
+    uc: z.string(),
+    glu: z.string(),
+    glasgow: z.string()
+  })).optional(),
+
   // Manejo
   viaAerea: z.boolean().optional(),
   canalizacion: z.boolean().optional(),
@@ -198,4 +212,5 @@ export interface TabConfig {
   icon: any;
   requiredFields: string[];
   optionalFields: string[];
+  isSpecial?: boolean;
 }
