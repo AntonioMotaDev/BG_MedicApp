@@ -17,8 +17,16 @@ interface RootLayoutProps {
 
 const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   const [isPortrait, setIsPortrait] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // Check if we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
+    if (!isClient) return;
+
     const checkScreenOrientation = () => {
       const isPortraitOrientation = window.innerHeight > window.innerWidth;
       setIsPortrait(isPortraitOrientation);
@@ -32,25 +40,27 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
       window.removeEventListener('resize', checkScreenOrientation);
       window.removeEventListener('orientationchange', checkScreenOrientation);
     };
-  }, []);
+  }, [isClient]);
 
   return (
     <html lang="es">
       <body className="h-full">
         <ThemeProvider>
-          <div className="min-h-screen flex bg-background">
-            <Sidebar />
-            <div className="flex flex-col flex-1 min-h-screen">
-              <Header />
-              <main className={`flex-1 p-4 overflow-y-auto bg-background ${isPortrait ? 'pb-20' : ''}`}>
-                <div className="max-w-full h-full">
-                  {children}
-                </div>
-              </main>
-              <Footer className={isPortrait ? 'mb-16' : ''} />
+          <div className="min-h-screen flex flex-col bg-background">
+            <Header />
+            <div className="flex flex-1 min-h-0">
+              <Sidebar />
+              <div className="flex flex-col flex-1 min-h-0">
+                <main className={`flex-1 p-4 overflow-y-auto bg-background ${isClient && isPortrait ? 'pb-20' : ''}`}>
+                  <div className="max-w-full h-full">
+                    {children}
+                  </div>
+                </main>
+                <Footer className={isClient && isPortrait ? 'mb-16' : ''} />
+              </div>
             </div>
           </div>
-          {isPortrait && <BottomTabs />}
+          {isClient && isPortrait && <BottomTabs />}
           <Toaster />
           <SonnerToaster position="top-right" />
         </ThemeProvider>

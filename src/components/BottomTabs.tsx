@@ -1,6 +1,6 @@
 "use client";
 
-import { FC } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,12 @@ interface BottomTabsProps {
 const BottomTabs: FC<BottomTabsProps> = ({ className }) => {
   const pathname = usePathname();
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+
+  // Check if we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const routes = [
     {
@@ -56,6 +62,11 @@ const BottomTabs: FC<BottomTabsProps> = ({ className }) => {
   const handleNavigation = (href: string) => {
     router.push(href);
   };
+
+  // Don't render until client-side hydration is complete
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <div className={cn(

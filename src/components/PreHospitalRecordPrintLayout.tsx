@@ -128,20 +128,13 @@ export const PreHospitalRecordPrintLayout: React.FC<PreHospitalRecordPrintLayout
   return (
     <div className="frap-layout print-layout">
       
-      {/* Header - Logo y Título */}
-      <div className="frap-header print-header print-section">
-        <div className="frap-flex print-flex frap-items-center print-items-center frap-justify-between print-justify-between frap-p-2 print-p-2">
-          <div className="frap-w-16 print-w-16 frap-h-16 print-h-16 border border-gray-400 print-border frap-flex print-flex frap-items-center print-items-center frap-justify-center print-justify-center frap-text-xs print-text-xs">
-            LOGO
-          </div>
+      {/* Registro de Atención Prehospitalaria */}
+      <div className="frap-header print-section">
+        <div className="frap-flex print-flex frap-items-center print-items-center frap-justify-between print-justify-between frap-p-2 print-p-2 bg-gray-100 print-bg-gray-100">
           <div className="frap-flex-1 print-flex-1 frap-text-center print-text-center">
             <h1 className="frap-text-sm print-text-sm frap-font-bold print-font-bold frap-uppercase print-uppercase frap-tracking-wide print-tracking-wide">
-              FORMATO DE REGISTRO DE TRASLADO Y ATENCIÓN PREHOSPITALARIA
+              REGISTRO DE ATENCIÓN PREHOSPITALARIA.
             </h1>
-            <p className="frap-text-xs print-text-xs frap-mt-2 print-mt-2">FRAP</p>
-          </div>
-          <div className="frap-w-16 print-w-16 frap-h-16 print-h-16 border border-gray-400 print-border frap-flex print-flex frap-items-center print-items-center frap-justify-center print-justify-center frap-text-xs print-text-xs">
-            QR
           </div>
         </div>
       </div>

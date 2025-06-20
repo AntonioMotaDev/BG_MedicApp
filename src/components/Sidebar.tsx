@@ -13,11 +13,19 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isPortrait, setIsPortrait] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
 
+  // Check if we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Check if mobile and portrait orientation
   useEffect(() => {
+    if (!isClient) return;
+
     const checkScreenOrientation = () => {
       const isMobileSize = window.innerWidth < 768;
       const isPortraitOrientation = window.innerHeight > window.innerWidth;
@@ -38,7 +46,7 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
       window.removeEventListener('resize', checkScreenOrientation);
       window.removeEventListener('orientationchange', checkScreenOrientation);
     };
-  }, []);
+  }, [isClient]);
 
   const routes = [
     {
@@ -86,9 +94,34 @@ const Sidebar: FC<SidebarProps> = ({ className }) => {
     }
   };
 
-  // Hide sidebar in portrait orientation
-  if (isPortrait) {
+  // Hide sidebar in portrait orientation, but only after client-side hydration
+  if (isClient && isPortrait) {
     return null;
+  }
+
+  // Show a placeholder during SSR to match initial client render
+  if (!isClient) {
+    return (
+      <div className={cn(
+        "relative border-r bg-background transition-all duration-300 shrink-0 h-full w-16",
+        className
+      )}>
+        <div className="h-full py-6">
+          <div className="space-y-4 py-4">
+            <div className="px-3 py-2">
+              <div className="space-y-1">
+                {routes.map((route) => (
+                  <div
+                    key={route.href}
+                    className="w-full h-10 bg-muted/20 rounded-md animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
